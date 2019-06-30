@@ -205,8 +205,9 @@ export class Parser {
             default:
                 return left
         }
+        stream.consume()
 
-        currentToken = stream.consume();
+        currentToken = stream.peek();
         switch (currentToken.type) {
             case TokenType.String:
                 stream.consume()

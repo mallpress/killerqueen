@@ -9,7 +9,7 @@ export class Condition extends Node {
     public operator: BooleanOperator
     public right: Node
     constructor(left: Node, operator: BooleanOperator, right: Node) {
-        super(NodeType.Expression)
+        super(NodeType.Condition)
         this.left = left
         this.operator = operator
         this.right = right
