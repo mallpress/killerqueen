@@ -24,10 +24,11 @@ export class IdentifierTokenizer extends BaseTokenizer {
             if(IdentifierTokenizer.validName.test(char)) {
                 currentValue += char
             } else if(!IdentifierTokenizer.validName.test(char)) {
-                return new TokenResult(currentValue.length, new Token(TokenType.Identifier, currentValue, current))
+                break;
             }
             tempPos++;
-        }        
+        }
+        if(currentValue !== "") return new TokenResult(currentValue.length, new Token(TokenType.Identifier, currentValue, current))
         return null
     }
 }

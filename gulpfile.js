@@ -12,7 +12,7 @@ gulp.task('default', function () {
     var extensions = ['.js', '.ts', '.json'];
     let b = browserify({
             extensions: extensions,
-            standalone: 'Reindeer',
+            standalone: 'KillerQueen',
             debug: false
         })
         .plugin('tsify', {

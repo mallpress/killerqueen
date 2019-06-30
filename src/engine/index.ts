@@ -9,6 +9,7 @@ import { Identifier } from "../ast/identifier";
 import { NumericLiteral } from "../ast/numericliteral";
 import { StringLiteral } from "../ast/stringliteral";
 import { BooleanLiteral } from "../ast/booleanliteral";
+import { FunctionCall } from "../ast/functioncall";
 
 export class Engine {
     private ast : Sequence
@@ -69,7 +70,7 @@ export class Engine {
     }
 
     private evaluateBranch(branch: Branch, context: {[ key : string] : any}) {
-        
+        ;
     }
     
     private evaluateExpression(expression: Node, context: {[ key : string] : any}) : any {
@@ -81,7 +82,72 @@ export class Engine {
             case NodeType.BooleanLiteral:
                 return (expression as BooleanLiteral).value
             case NodeType.FunctionCall:
-
+                return this.executeFunction(expression as FunctionCall, context)
+            case NodeType.Identifier: 
+                let ident = (expression as Identifier).name
+                return context[ident]
+            case NodeType.PropertyAccess:
+                let prop = (expression as PropertyAccess)
+                return context[prop.object.name][prop.property.name]
+                return this
         }
+    }
+
+    private executeFunction(call : FunctionCall, context: {[ key : string] : any}) : any {
+        let fnName = call.name.toUpperCase()
+        switch(fnName) {
+            case 'MAX':
+                return this.evaluateMax(call.parameters, context)
+            case 'MIN':
+                return this.evaluateMin(call.parameters, context)
+            case 'ABS':
+                return Math.abs(this.evaluateExpression(call.parameters[0], context))
+            case 'GETNODE':
+                let nodeModel = context['model']
+                return nodeModel.getNode(this.evaluateExpression(call.parameters[0], context))
+            case 'GETLINK':
+                let linkModel = context['model']
+                return linkModel.getLink(this.evaluateExpression(call.parameters[0], context))
+        }
+    }
+
+    private evaluateMax(args : Node [], context: {[ key : string] : any}) : number {
+        let res = undefined
+        for(let i = 0; i < args.length; i++) {
+            let exp = args[i]
+            let val = undefined
+            switch(exp.nodeType) {
+                case NodeType.NumericLiteral:
+                case NodeType.FunctionCall:
+                    val = this.evaluateExpression(exp, context)
+                    break;
+                case NodeType.PropertyAccess:
+                    let prop = (exp as PropertyAccess)
+                    val = context[prop.object.name][prop.property.name]
+                    break;
+            }
+            if(res === undefined || val > res) res = val
+        }
+        return res
+    }
+    
+    private evaluateMin(args : Node [], context: {[ key : string] : any}) : number {
+        let res = undefined
+        for(let i = 0; i < args.length; i++) {
+            let exp = args[i]
+            let val = undefined
+            switch(exp.nodeType) {
+                case NodeType.NumericLiteral:
+                case NodeType.FunctionCall:
+                    val = this.evaluateExpression(exp, context)
+                    break;
+                case NodeType.PropertyAccess:
+                    let prop = (exp as PropertyAccess)
+                    val = context[prop.object.name][prop.property.name]
+                    break;
+            }
+            if(res === undefined || val < res) res = val
+        }
+        return res
     }
 }
