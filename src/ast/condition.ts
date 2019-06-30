@@ -5,13 +5,13 @@ import { Identifier } from "./identifier";
 import { PropertyAccess } from "./propertyaccess";
 
 export class Condition extends Node {
-    public ref: Identifier | PropertyAccess
+    public left: Node
     public operator: BooleanOperator
-    public value: any
-    constructor(ref: Identifier | PropertyAccess, operator: BooleanOperator, value: any) {
+    public right: Node
+    constructor(left: Node, operator: BooleanOperator, right: Node) {
         super(NodeType.Expression)
-        this.ref = ref
+        this.left = left
         this.operator = operator
-        this.value = value
+        this.right = right
     }
 }

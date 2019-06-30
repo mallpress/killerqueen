@@ -149,55 +149,38 @@ export class Parser {
         return prevNode!
     }
 
-    private parseConditional(stream: TokenStream): Condition {
-        let reference: string | string[] = "";
-        let property = "";
+    private parseConditional(stream: TokenStream): Node {
         let operator = BooleanOperator.DoubleEquals
-        let value = null;
-        let currentToken = stream.consume()
-        switch (currentToken.type) {
-            // case TokenType.Pipe:
-            //     refType = ReferenceType.Pipe
-            //     break;
-            // case TokenType.Junction:
-            //     refType = ReferenceType.Junction
-            //     break;
-            // case TokenType.Decision:
-            //     refType = ReferenceType.Decision
-            //     break;
-            default:
-                throw new ParserError(`parse error, reference type expected, found ${currentToken.value}`, currentToken.position)
-        }
-
-        currentToken = stream.consume()
+        let currentToken = stream.peek()
+        let left = null;
+        let right = null;
         switch (currentToken.type) {
             case TokenType.String:
-                reference = currentToken.value
+                stream.consume()
+                left = new StringLiteral(currentToken.value)
                 break;
-            case TokenType.In:
-                reference = this.parseArray(TokenType.String, stream);
+            case TokenType.Number:
+                stream.consume()
+                left = new NumericLiteral(currentToken.value)
                 break;
+            case TokenType.True:
+                stream.consume()
+                left = new BooleanLiteral(true)
+                break;
+            case TokenType.False:
+                stream.consume()
+                left = new BooleanLiteral(false)
+                break;
+            case TokenType.Identifier:
+                left = this.parseReference(stream)
+                break
             default:
-                throw new ParserError(`parse error, reference expected, found ${currentToken.value}`, currentToken.position)
+                throw new ParserError(`parse error, conditional type expected, found ${currentToken.value}`, currentToken.position)
         }
 
-        let tokenTypeForValues = TokenType.String
-        currentToken = stream.consume()
-        switch (currentToken.type) {
-            // case TokenType.Diameter:
-            //     property = currentToken.value
-            //     tokenTypeForValues = TokenType.Number
-            //     break;
-            // case TokenType.Outcome:
-            //     property = currentToken.value;
-            //     tokenTypeForValues = TokenType.String
-            //     break;
-            default:
-                throw new ParserError(`parse error, property expected, found ${currentToken.value}`, currentToken.position)
-        }
+        let nextToken = stream.peek()
 
-        currentToken = stream.consume();
-        switch (currentToken.type) {
+        switch (nextToken.type) {
             case TokenType.DoubleEquals:
                 operator = BooleanOperator.DoubleEquals
                 break;
@@ -220,25 +203,35 @@ export class Parser {
                 operator = BooleanOperator.In
                 break
             default:
-                throw new ParserError(`parse error, bool operator expected, found ${currentToken.value}`, currentToken.position)
+                return left
         }
 
-        if (operator !== BooleanOperator.In) {
-            currentToken = stream.consume();
-            switch (currentToken.type) {
-                case TokenType.Number:
-                    value = currentToken.value
-                    break;
-                case TokenType.String:
-                    value = currentToken.value
-                    break;
-                default:
-                    throw new ParserError(`parse error, value expected, found ${currentToken.value}`, currentToken.position)
-            }
-        } else {
-            value = this.parseArray<any>(tokenTypeForValues, stream);
+        currentToken = stream.consume();
+        switch (currentToken.type) {
+            case TokenType.String:
+                stream.consume()
+                right = new StringLiteral(currentToken.value)
+                break;
+            case TokenType.Number:
+                stream.consume()
+                right = new NumericLiteral(currentToken.value)
+                break;
+            case TokenType.True:
+                stream.consume()
+                right = new BooleanLiteral(true)
+                break;
+            case TokenType.False:
+                stream.consume()
+                right = new BooleanLiteral(false)
+                break;
+            case TokenType.Identifier:
+                    right = this.parseReference(stream)
+                break
+            default:
+                throw new ParserError(`parse error, conditional type expected, found ${currentToken.value}`, currentToken.position)
         }
-        // return new Condition(refType, reference, property, operator, value);
+
+        return new Condition(left, operator, right);
     }
 
     //#endregion

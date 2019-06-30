@@ -10,6 +10,10 @@ import { NumericLiteral } from "../ast/numericliteral";
 import { StringLiteral } from "../ast/stringliteral";
 import { BooleanLiteral } from "../ast/booleanliteral";
 import { FunctionCall } from "../ast/functioncall";
+import { ConditionGroup } from "../ast/conditiongroup";
+import { Condition } from "../ast/condition";
+import { BinaryOperator } from "../ast/enums/binaryoperator";
+import { BooleanOperator } from "../ast/booleanoperator";
 
 export class Engine {
     private ast : Sequence
@@ -26,6 +30,20 @@ export class Engine {
                     break;
                 case NodeType.Branch:
                     this.evaluateBranch(line as Branch, context)
+                    break;
+            }
+        }
+    }
+
+    public executeSequence(sequence : Sequence, context : {[ key : string] : any}) {
+        for(let i = 0; i < sequence.nodes.length; i++) {
+            let node = sequence.nodes[i]
+            switch(node.nodeType) {
+                case NodeType.Branch:
+                    this.evaluateBranch(node as Branch, context)
+                    break;
+                case NodeType.Operation:
+                    this.executeOperation(node as Operation, context)
                     break;
             }
         }
@@ -70,7 +88,61 @@ export class Engine {
     }
 
     private evaluateBranch(branch: Branch, context: {[ key : string] : any}) {
-        ;
+        if(this.evaluateConditions(branch.condition, context)) {
+            this.executeSequence(branch.condTrueBody, context)
+        }
+        else if(branch.condFalseBody) {
+            this.executeSequence(branch.condFalseBody, context)
+        }
+    }
+
+    private evaluateConditions(conditions : Node, context : {[key : string]  : any}) : boolean {
+        switch(conditions.nodeType) {
+            case NodeType.BooleanLiteral:
+                return (conditions as BooleanLiteral).value
+            case NodeType.Condition: 
+                return this.evaluateCondition(conditions as Condition, context)
+            case NodeType.ConditionGroup:
+                let condGroup = conditions as ConditionGroup
+                let leftResult = this.evaluateConditions(condGroup.left, context)
+                let rightResult = true
+                if (condGroup.right) {
+                    rightResult = this.evaluateConditions(condGroup.right, context)
+                    switch (condGroup.operator) {
+                    case BinaryOperator.And:
+                        return leftResult && rightResult
+                    case BinaryOperator.Or:
+                        return leftResult || rightResult
+                    case BinaryOperator.Not:
+                        return leftResult && !rightResult
+                    }
+                }
+        }
+        return false
+    }
+
+    private evaluateCondition(condition : Node, context : {[key : string]  : any}) : boolean {
+        switch(condition.nodeType) {
+            case NodeType.Condition:
+                let cond = condition as Condition
+                let left = this.evaluateExpression(cond.left, context)
+                let right = this.evaluateExpression(cond.right, context)
+                switch(cond.operator) {
+                    case BooleanOperator.DoubleEquals:
+                        return left == right
+                    case BooleanOperator.GreaterThan:
+                        return left > right
+                    case BooleanOperator.GreaterThanEqual:
+                            return left >= right
+                    case BooleanOperator.LessThan:
+                            return left < right
+                    case BooleanOperator.LessThanEqual:
+                            return left <= right
+                    case BooleanOperator.NotEquals:
+                            return left != right
+                }
+        }
+        return false
     }
     
     private evaluateExpression(expression: Node, context: {[ key : string] : any}) : any {
@@ -89,7 +161,6 @@ export class Engine {
             case NodeType.PropertyAccess:
                 let prop = (expression as PropertyAccess)
                 return context[prop.object.name][prop.property.name]
-                return this
         }
     }
 
