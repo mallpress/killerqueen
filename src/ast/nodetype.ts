@@ -11,4 +11,5 @@ export enum NodeType {
     StringLiteral = "StringLiteral",
     NumericLiteral = "NumericLiteral",
     BooleanLiteral = "BooleanLiteral",
+    ForLoop = "ForLoop",
 }

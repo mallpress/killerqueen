@@ -36,5 +36,7 @@ export enum TokenType {
     Divide,
     Multiply,
     SemiColon,
-    LineBreak
+    LineBreak,
+    For,
+    Each
 }

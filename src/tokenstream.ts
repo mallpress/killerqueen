@@ -17,7 +17,7 @@ export class TokenStream {
         return this.tokens[prevValue]
     }
 
-    public hasNext() : boolean {
-        return this.position < this.tokens.length
+    public hasNext(count : number = 0) : boolean {
+        return this.position + count < this.tokens.length
     }
 }

@@ -20,6 +20,7 @@ import { BooleanLiteral } from "../ast/booleanliteral";
 import { FunctionCall } from "../ast/functioncall";
 import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
+import { ForLoop } from "../ast/forloop";
 
 export class Parser {
     constructor() {
@@ -38,6 +39,8 @@ export class Parser {
                 case TokenType.Identifier:
                     sequence.nodes.push(this.parseOperation(stream))
                     break;
+                case TokenType.For:
+                    sequence.nodes.push(this.parseForLoop(stream))
                 // we can skip multi line breaks
                 case TokenType.LineBreak:
                     break;
@@ -248,7 +251,7 @@ export class Parser {
             seq.nodes.push(op)
             if (!stream.hasNext()) break;
             let nextToken = stream.peek()
-            if (nextToken.type !== TokenType.SemiColon) {
+            if (!stream.hasNext() || nextToken.type !== TokenType.SemiColon) {
                 break;
             }
             stream.consume();
@@ -303,7 +306,7 @@ export class Parser {
                     break;
                 case TokenType.Identifier:
                     let nextToken = stream.peek(1)
-                    if(nextToken.type === TokenType.ParenOpen) {
+                    if(stream.hasNext(1) && nextToken.type === TokenType.ParenOpen) {
                         toReturn = this.parseFunctionCall(stream)
                     }
                     else {
@@ -368,7 +371,7 @@ export class Parser {
         let nextToken = stream.consume()
         let ident : Identifier | PropertyAccess = new Identifier(nextToken.value);
 
-        if(!stream.hasNext()) throw new ParserError(`parser error, operation or property access expected, end of stream found`, nextToken.position)
+        if(!stream.hasNext()) return ident
 
         nextToken = stream.peek()
 
@@ -404,12 +407,34 @@ export class Parser {
         return new FunctionCall(fnName, parameters)
     }
 
+    private parseForLoop(stream : TokenStream) : ForLoop {
+        stream.consume()
+        let nextToken = stream.consume()
+        switch(nextToken.type) {
+            case TokenType.Each:
+                nextToken = stream.peek()
+                if(nextToken.type !== TokenType.SquareOpen) {
+                    throw new ParserError(`parser error, for loop invalid, [ expected after FOR EACH`, nextToken.position)
+                }
+                return new ForLoop(this.parseArray(stream), this.parseOperations(stream))
+            case TokenType.ParenOpen:
+                let count = this.parseExpression(stream)
+                nextToken = stream.consume()
+                if(nextToken.type !== TokenType.ParenClose) {
+                    throw new ParserError(`parser error, for loop invalid, ) expected after itterations`, nextToken.position)
+                }
+                return new ForLoop(count, this.parseOperations(stream))
+            default:
+                throw new ParserError(`parser error, for loop invalid, array or itterations expected`, nextToken.position)
+        }
+    }
+
     //#endregion
 
     //#region Utility Functions
 
-    private parseArray<T>(tokenType: TokenType, stream: TokenStream): T[] {
-        let toReturn: T[] = []
+    private parseArray(stream: TokenStream): any[] {
+        let toReturn : any[] = []
         let finished = false;
         let prevValue = null;
 
@@ -421,7 +446,8 @@ export class Parser {
         while (stream.hasNext() && !finished) {
             let ref = stream.consume();
             switch (ref.type) {
-                case tokenType:
+                case TokenType.String:
+                case TokenType.Number:
                     if (prevValue !== null) throw new ParserError(`parse error, missing comma?`, ref.position)
                     prevValue = ref
                     toReturn.push(ref.value)

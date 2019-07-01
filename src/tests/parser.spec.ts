@@ -117,4 +117,44 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(100)
     })
+
+    it("Test basic for loop with itterations", () => {
+        let text =  'FOR (10) $i += 1'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$i' : 0}
+        engine.execute(ctx)
+        expect(ctx['$i']).toBe(10)
+    })
+
+    it("Test basic for loop with itterations using expression", () => {
+        let text =  'FOR ($count + 1) $i += 1'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$i' : 0, '$count': 5}
+        engine.execute(ctx)
+        expect(ctx['$i']).toBe(6)
+    })
+
+    it("Test basic for each loop", () => {
+        let text =  'FOR EACH [0, 1, 2, 3] $i += $val'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$i' : 0}
+        engine.execute(ctx)
+        expect(ctx['$i']).toBe(6)
+    })
+
+    it("Test basic for each loop", () => {
+        let text =  'FOR EACH [\'a\',\'b\'] $i = $val'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$i' : 0}
+        engine.execute(ctx)
+        expect(ctx['$i']).toBe('b')
+    })
 })

@@ -16,6 +16,7 @@ import { BinaryOperator } from "../ast/enums/binaryoperator";
 import { BooleanOperator } from "../ast/booleanoperator";
 import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
+import { ForLoop } from "../ast/forloop";
 
 declare var log : (s : string) => void
 
@@ -34,6 +35,9 @@ export class Engine {
                     break;
                 case NodeType.Branch:
                     this.evaluateBranch(line as Branch, context)
+                    break;
+                case NodeType.ForLoop:
+                    this.executeForLoop(line as ForLoop, context)
                     break;
             }
         }
@@ -182,6 +186,25 @@ export class Engine {
                 return left * right
             case MathematicalOperator.Divide:
                 return left / right
+        }
+    }
+
+    private executeForLoop(loop : ForLoop, context: {[ key : string] : any}) {
+        if(Array.isArray(loop.parameter)) {
+            let vals = loop.parameter
+            for(let i = 0; i < vals.length; i++) {
+                context['$val'] = vals[i]
+                this.executeSequence(loop.operations, context)
+            }
+            delete context['$val']
+        }
+        else {
+            let val = this.evaluateExpression(loop.parameter, context)
+            for(let i = 0; i < val; i++) {
+                context['$val'] = i
+                this.executeSequence(loop.operations, context)
+            }
+            delete context['$val']
         }
     }
 

@@ -53,6 +53,8 @@ export class Tokenizer {
             new WordTokenizer(TokenType.False, "false"),
             new WordTokenizer(TokenType.Is, "is"),
             new WordTokenizer(TokenType.In, "in"),
+            new WordTokenizer(TokenType.For, "for"),
+            new WordTokenizer(TokenType.Each, "each"),
             new IdentifierTokenizer(),
         ];
     }
