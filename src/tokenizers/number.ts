@@ -52,6 +52,7 @@ export class NumberTokenizer extends BaseTokenizer {
             }
             tempPos++;
         }
+        if(!numberStarted) return null
         try {
             let value = parseFloat(currentValue) * multiplier
             return new TokenResult(length, new Token(TokenType.Number, value, current))

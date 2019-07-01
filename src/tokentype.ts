@@ -34,6 +34,7 @@ export enum TokenType {
     Plus,
     Minus,
     Divide,
+    Multiply,
     SemiColon,
-    LineBreak,e
+    LineBreak
 }

@@ -2,7 +2,7 @@ export enum NodeType {
     Branch = "Branch",
     Condition = "Condition",
     ConditionGroup = "ConditionGroup",
-    Expression = "Expression",
+    Aggregate = "Aggregate",
     Operation = "Operation",
     Sequence = "Sequence",
     FunctionCall = "FunctionCall",

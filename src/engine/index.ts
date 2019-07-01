@@ -14,6 +14,8 @@ import { ConditionGroup } from "../ast/conditiongroup";
 import { Condition } from "../ast/condition";
 import { BinaryOperator } from "../ast/enums/binaryoperator";
 import { BooleanOperator } from "../ast/booleanoperator";
+import { Aggregate } from "../ast/aggregate";
+import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 
 export class Engine {
     private ast : Sequence
@@ -161,6 +163,23 @@ export class Engine {
             case NodeType.PropertyAccess:
                 let prop = (expression as PropertyAccess)
                 return context[prop.object.name][prop.property.name]
+            case NodeType.Aggregate:
+                return this.computeAggregate(expression as Aggregate, context)
+        }
+    }
+
+    private computeAggregate(aggregate: Aggregate, context: {[ key : string] : any}) {
+        let left = this.evaluateExpression(aggregate.left, context)
+        let right = this.evaluateExpression(aggregate.right!, context)
+        switch(aggregate.operator) {
+            case MathematicalOperator.Plus:
+                return left + right
+            case MathematicalOperator.Minus:
+                return left - right
+            case MathematicalOperator.Multiply:
+                return left * right
+            case MathematicalOperator.Divide:
+                return left / right
         }
     }
 
@@ -186,17 +205,7 @@ export class Engine {
         let res = undefined
         for(let i = 0; i < args.length; i++) {
             let exp = args[i]
-            let val = undefined
-            switch(exp.nodeType) {
-                case NodeType.NumericLiteral:
-                case NodeType.FunctionCall:
-                    val = this.evaluateExpression(exp, context)
-                    break;
-                case NodeType.PropertyAccess:
-                    let prop = (exp as PropertyAccess)
-                    val = context[prop.object.name][prop.property.name]
-                    break;
-            }
+            let val = this.evaluateExpression(exp, context)
             if(res === undefined || val > res) res = val
         }
         return res

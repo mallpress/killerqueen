@@ -18,6 +18,8 @@ import { StringLiteral } from "../ast/stringliteral";
 import { NumericLiteral } from "../ast/numericliteral";
 import { BooleanLiteral } from "../ast/booleanliteral";
 import { FunctionCall } from "../ast/functioncall";
+import { Aggregate } from "../ast/aggregate";
+import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 
 export class Parser {
     constructor() {
@@ -280,28 +282,86 @@ export class Parser {
     }
 
     private parseExpression(stream : TokenStream) : Node {
-        let currentToken = stream.peek()
-        switch(currentToken.type) {
-            case TokenType.String:
-                stream.consume()
-                return new StringLiteral(currentToken.value)
-            case TokenType.Number:
-                stream.consume()
-                return new NumericLiteral(currentToken.value)
-            case TokenType.True:
-            case TokenType.False:
-                stream.consume()
-                return new BooleanLiteral(currentToken.type === TokenType.True ? true : false)
-            case TokenType.Identifier:
-                let nextToken = stream.peek(1)
-                if(nextToken.type === TokenType.ParenOpen) {
-                    return this.parseFunctionCall(stream)
-                }
-                return this.parseReference(stream)
-            default:
+        let currentToken = null
+        let toReturn = null
+        let currentExpression = null
+        while(stream.hasNext()) {
+            currentToken = stream.peek()
+            switch(currentToken.type) {
+                case TokenType.String:
+                    stream.consume()
+                    toReturn = new StringLiteral(currentToken.value)
+                    break;
+                case TokenType.Number:
+                    stream.consume()
+                    toReturn = new NumericLiteral(currentToken.value)
+                    break;
+                case TokenType.True:
+                case TokenType.False:
+                    stream.consume()
+                    toReturn = new BooleanLiteral(currentToken.type === TokenType.True ? true : false)
+                    break;
+                case TokenType.Identifier:
+                    let nextToken = stream.peek(1)
+                    if(nextToken.type === TokenType.ParenOpen) {
+                        toReturn = this.parseFunctionCall(stream)
+                    }
+                    else {
+                        toReturn = this.parseReference(stream)
+                    }
+                    break;
+                default:
                     throw new ParserError(`parser error, expression, found ${currentToken.value}`, currentToken.position)
+            }
+            if(!stream.hasNext()) break;
+            currentToken = stream.peek()
+            switch(currentToken.type) {
+                case TokenType.Plus:
+                case TokenType.Minus:
+                case TokenType.Multiply:
+                case TokenType.Divide:
+                    let operator = MathematicalOperator.Plus
+                    switch(currentToken.type) {
+                        case TokenType.Plus:
+                            operator = MathematicalOperator.Plus
+                            break;
+                        case TokenType.Minus:
+                            operator = MathematicalOperator.Minus
+                            break;
+                        case TokenType.Multiply:
+                            operator = MathematicalOperator.Multiply
+                            break;
+                        case TokenType.Divide:
+                            operator = MathematicalOperator.Divide
+                            break;
+                    }
+                    stream.consume()
+                    // so we can handle multiple together 1 + 2 + 3
+                    if(currentExpression !== null) {
+                        let newExp = new Aggregate(toReturn, operator)
+                        currentExpression.right = newExp
+                        currentExpression = newExp
+                    }
+                    else {
+                        currentExpression = new Aggregate(toReturn, operator)
+                    }
+                    continue
+                default:
+                    if(currentExpression !== null) {
+                        currentExpression.right = toReturn
+                        return currentExpression
+                    }
+                    else {
+                        return toReturn
+                    }
+            }
         }
-
+        if(toReturn === null) throw new ParserError(`parser error, expression, found ${currentToken!.value}`, currentToken!.position)
+        if(currentExpression !== null) {
+            currentExpression.right = toReturn
+            return currentExpression
+        }
+        return toReturn
     }
 
     private parseReference(stream : TokenStream) : Identifier | PropertyAccess {

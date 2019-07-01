@@ -37,6 +37,8 @@ export class Tokenizer {
             new SymbolTokenizer(TokenType.MinusEquals, "-="),
             new SymbolTokenizer(TokenType.Plus, "+"),
             new SymbolTokenizer(TokenType.Minus, "-"),
+            new SymbolTokenizer(TokenType.Divide, "/"),
+            new SymbolTokenizer(TokenType.Multiply, "*"),
             new SymbolTokenizer(TokenType.SemiColon, ";"),
             new SymbolTokenizer(TokenType.Dot, "."),
             new SymbolTokenizer(TokenType.And, "&&"),
