@@ -107,4 +107,14 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(5)
     })
+
+    it("Test aggregate expressions as parameters with negative numbers", () => {
+        let text =  '$cost = MAX(1, ABS(MIN(1, -99)) + 1)'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 10}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(100)
+    })
 })

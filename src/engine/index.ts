@@ -17,6 +17,8 @@ import { BooleanOperator } from "../ast/booleanoperator";
 import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 
+declare var log : (s : string) => void
+
 export class Engine {
     private ast : Sequence
     public constructor(ast : Sequence) {
@@ -192,6 +194,9 @@ export class Engine {
                 return this.evaluateMin(call.parameters, context)
             case 'ABS':
                 return Math.abs(this.evaluateExpression(call.parameters[0], context))
+            case 'LOG':
+                log(this.evaluateExpression(call.parameters[0], context))
+                break;
             case 'GETNODE':
                 let nodeModel = context['model']
                 return nodeModel.getNode(this.evaluateExpression(call.parameters[0], context))

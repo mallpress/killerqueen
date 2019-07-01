@@ -37,6 +37,7 @@ export class NumberTokenizer extends BaseTokenizer {
         while(tempPos < input.length) {
             let char = input[tempPos]
             if(NumberTokenizer.numberCheck.test(char)) {
+                numberStarted = true;
                 currentValue += char
                 length++;
             } else if(char === '.') {
