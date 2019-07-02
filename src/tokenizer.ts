@@ -15,7 +15,7 @@ export class Tokenizer {
     constructor() {
         this.tokenizers = [
             new PatternTokenizer(TokenType.WhiteSpace, "White Space", /\s/, true),
-            new PatternTokenizer(TokenType.LineBreak, "Line Break", /[\\r\\n]/, false),
+            new PatternTokenizer(TokenType.LineBreak, "Line Break", /[\r\n]/, false),
             new BraceTokenizer(TokenType.ParenOpen, "("),
             new BraceTokenizer(TokenType.ParenClose, ")"),
             new BraceTokenizer(TokenType.BraceOpen, "{"),
