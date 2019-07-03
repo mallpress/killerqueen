@@ -12,6 +12,8 @@ There are also a range of inbuilt functions:
 * Min
 * Max
 * Abs
+* Ceil(ing)
+* Floor
 
 The mathematical capabilities are rather limited at the moment, not taking into acount any kind of precedence, or supporting bracketing.
 

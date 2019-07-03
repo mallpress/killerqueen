@@ -217,6 +217,10 @@ export class Engine {
                 return this.evaluateMin(call.parameters, context)
             case 'ABS':
                 return Math.abs(this.evaluateExpression(call.parameters[0], context))
+            case 'CEIL':
+                return Math.ceil(this.evaluateExpression(call.parameters[0], context))
+            case 'FLOOR':
+                return Math.floor(this.evaluateExpression(call.parameters[0], context))
             case 'LOG':
                 log(this.evaluateExpression(call.parameters[0], context))
                 break;
