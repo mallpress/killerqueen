@@ -21,6 +21,7 @@ import { FunctionCall } from "../ast/functioncall";
 import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 import { ForLoop } from "../ast/forloop";
+import { IndexAccess } from "../ast/indexaccess";
 
 export class Parser {
     constructor() {
@@ -359,7 +360,7 @@ export class Parser {
                     }
             }
         }
-        if(toReturn === null) throw new ParserError(`parser error, expression, found ${currentToken!.value}`, currentToken!.position)
+        if(toReturn === null) throw new ParserError(`parser error, expression expected, found ${currentToken!.value}`, currentToken!.position)
         if(currentExpression !== null) {
             currentExpression.right = toReturn
             return currentExpression
@@ -369,38 +370,35 @@ export class Parser {
 
     private parseReference(stream : TokenStream) : Identifier | PropertyAccess {
         let nextToken = stream.consume()
-        let ident : Identifier | PropertyAccess = new Identifier(nextToken.value);
-
+        let ident = new Identifier(nextToken.value)
         if(!stream.hasNext()) return ident
 
         nextToken = stream.peek()
-
-        if(nextToken.type === TokenType.Dot) {
-            stream.consume()
-            if(!stream.hasNext()) throw new ParserError(`parser error, property name expected, end of stream found`, nextToken.position)
-            nextToken = stream.consume();           
-            if(nextToken.type !== TokenType.Identifier) throw new ParserError(`parse error, property name expected, found ${nextToken.value}`, nextToken.position)
-            let propAccess = this.parseReference(stream)
-            ident = new PropertyAccess(ident, propAccess)
-        } else if(nextToken.type === TokenType.SquareOpen) {
-            stream.consume()
-            if(!stream.hasNext()) throw new ParserError(`parser error, object or array index expected, end of stream found`, nextToken.position)
-
-            let index = this.parseExpression(stream);
-            if(!stream.hasNext()) throw new ParserError(`parser error, end of array access expected ], end of stream found`, nextToken.position)
-
-            nextToken = stream.consume()
-            if(nextToken.type !== TokenType.SquareClose) throw new ParserError(`parser error, end of array access expected ], found ${nextToken.value}`, nextToken.position)
-
-            nextToken = stream.peek()
-            if(nextToken.type === TokenType.Dot) {
-                
-            } 
-            else {
-                return new PropertyAccess(ident, index)
+        let subReferences : Node[] = []
+        let continueSearch = true;
+        while(continueSearch && stream.hasNext()) {
+            switch(nextToken.type) {
+                case TokenType.Dot:
+                    stream.consume()
+                    nextToken = stream.consume()
+                    if(nextToken.type !== TokenType.Identifier) throw new ParserError(`parser error, expected identifier, found ${nextToken.value}`, nextToken.position)
+                    subReferences.push(new Identifier(nextToken.value))
+                    break
+                case TokenType.SquareOpen:
+                    stream.consume()
+                    let exp = this.parseExpression(stream)
+                    nextToken = stream.consume()
+                    if(nextToken.type !== TokenType.SquareClose) throw new ParserError(`parser error, expected ], found ${nextToken.value}`, nextToken.position)
+                    subReferences.push(new IndexAccess(exp))
+                    break
+                default:
+                    continueSearch = false
+                    break
             }
+            nextToken = stream.peek()
         }
-        return ident
+        if(subReferences.length === 0) return ident
+        return new PropertyAccess(ident, subReferences)
     }
 
     private parseFunctionCall(stream : TokenStream) : FunctionCall {

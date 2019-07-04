@@ -17,6 +17,7 @@ import { BooleanOperator } from "../ast/booleanoperator";
 import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 import { ForLoop } from "../ast/forloop";
+import { IndexAccess } from "../ast/indexaccess";
 
 declare var log : (s : string) => void
 
@@ -62,18 +63,24 @@ export class Engine {
 
         if(operation.reference.nodeType === NodeType.PropertyAccess) {
             let propAccess = operation.reference as PropertyAccess
+            ///@ts-ignore
             let obj = context[propAccess.object.name]
             let currentValue = undefined
             switch(operation.operator) {
                 case AssignmentOperator.Equals:
+                    ///@ts-ignore
                     obj[propAccess.property.name] = rightValue
                     break;
                 case AssignmentOperator.PlusEquals:
+                    ///@ts-ignore
                     currentValue = obj[propAccess.property.name]
+                    ///@ts-ignore
                     obj[propAccess.property.name] = currentValue + rightValue
                     break;
                 case AssignmentOperator.MinusEquals:
+                    ///@ts-ignore
                     currentValue = obj[propAccess.property.name]
+                    ///@ts-ignore
                     obj[propAccess.property.name] = currentValue - (rightValue as any)
                     break;
             }
@@ -167,11 +174,23 @@ export class Engine {
                 let ident = (expression as Identifier).name
                 return context[ident]
             case NodeType.PropertyAccess:
-                let prop = (expression as PropertyAccess)
-                return context[prop.object.name][prop.property.name]
+                return this.resolvePropertyAccess(expression as PropertyAccess, context)
             case NodeType.Aggregate:
                 return this.computeAggregate(expression as Aggregate, context)
         }
+    }
+
+    private resolvePropertyAccess(reference: PropertyAccess, context : {[ key : string] : any}) : any {
+        let currentContext = context[reference.object.name]
+        for(let i = 0; i < reference.references.length; i++) {
+            let ref = reference.references[i]
+            if(ref.nodeType === NodeType.Identifier) {
+                currentContext = currentContext[(ref as Identifier).name]
+            } else {
+                currentContext = currentContext[this.evaluateExpression((ref as IndexAccess).index, context)]
+            }
+        }
+        return currentContext
     }
 
     private computeAggregate(aggregate: Aggregate, context: {[ key : string] : any}) {
@@ -255,7 +274,7 @@ export class Engine {
                     break;
                 case NodeType.PropertyAccess:
                     let prop = (exp as PropertyAccess)
-                    val = context[prop.object.name][prop.property.name]
+                    val = this.evaluateExpression(prop, context)
                     break;
             }
             if(res === undefined || val < res) res = val

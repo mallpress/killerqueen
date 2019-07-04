@@ -157,4 +157,14 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$i']).toBe('b')
     })
+    
+    it("Test array access", () => {
+        let text =  '$temp = a.b[0][0]'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : null, 'a' : {'b' : [[55]]}}
+        engine.execute(ctx)
+        expect(ctx['$temp']).toBe(55)
+    })
 })

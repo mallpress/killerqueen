@@ -7,6 +7,7 @@ export enum NodeType {
     Sequence = "Sequence",
     FunctionCall = "FunctionCall",
     PropertyAccess = "PropertyAccess",
+    IndexAccess = "IndexAccess",
     Identifier = "Identifier",
     StringLiteral = "StringLiteral",
     NumericLiteral = "NumericLiteral",

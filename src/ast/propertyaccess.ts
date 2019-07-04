@@ -4,10 +4,10 @@ import { Identifier } from "./identifier";
 
 export class PropertyAccess extends Node {
     public object: Identifier
-    public property: Identifier | PropertyAccess | Node
-    constructor(object: Identifier, property: Identifier | PropertyAccess | Node) {
+    public references: Node[]
+    constructor(object: Identifier, references: Node[]) {
         super(NodeType.PropertyAccess)
         this.object = object
-        this.property = property
+        this.references = references
     }
 }
