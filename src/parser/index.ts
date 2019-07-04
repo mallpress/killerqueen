@@ -380,8 +380,25 @@ export class Parser {
             if(!stream.hasNext()) throw new ParserError(`parser error, property name expected, end of stream found`, nextToken.position)
             nextToken = stream.consume();           
             if(nextToken.type !== TokenType.Identifier) throw new ParserError(`parse error, property name expected, found ${nextToken.value}`, nextToken.position)
-            let propName = new Identifier(nextToken.value)
-            ident = new PropertyAccess(ident, propName)
+            let propAccess = this.parseReference(stream)
+            ident = new PropertyAccess(ident, propAccess)
+        } else if(nextToken.type === TokenType.SquareOpen) {
+            stream.consume()
+            if(!stream.hasNext()) throw new ParserError(`parser error, object or array index expected, end of stream found`, nextToken.position)
+
+            let index = this.parseExpression(stream);
+            if(!stream.hasNext()) throw new ParserError(`parser error, end of array access expected ], end of stream found`, nextToken.position)
+
+            nextToken = stream.consume()
+            if(nextToken.type !== TokenType.SquareClose) throw new ParserError(`parser error, end of array access expected ], found ${nextToken.value}`, nextToken.position)
+
+            nextToken = stream.peek()
+            if(nextToken.type === TokenType.Dot) {
+                
+            } 
+            else {
+                return new PropertyAccess(ident, index)
+            }
         }
         return ident
     }
