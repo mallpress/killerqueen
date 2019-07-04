@@ -63,25 +63,18 @@ export class Engine {
 
         if(operation.reference.nodeType === NodeType.PropertyAccess) {
             let propAccess = operation.reference as PropertyAccess
-            ///@ts-ignore
-            let obj = context[propAccess.object.name]
             let currentValue = undefined
             switch(operation.operator) {
                 case AssignmentOperator.Equals:
-                    ///@ts-ignore
-                    obj[propAccess.property.name] = rightValue
+                    this.setPropertyAccessValue(propAccess, rightValue, context)
                     break;
                 case AssignmentOperator.PlusEquals:
-                    ///@ts-ignore
-                    currentValue = obj[propAccess.property.name]
-                    ///@ts-ignore
-                    obj[propAccess.property.name] = currentValue + rightValue
+                    currentValue = this.getPropertyAccessValue(propAccess, context)
+                    this.setPropertyAccessValue(propAccess, currentValue + rightValue, context)
                     break;
                 case AssignmentOperator.MinusEquals:
-                    ///@ts-ignore
-                    currentValue = obj[propAccess.property.name]
-                    ///@ts-ignore
-                    obj[propAccess.property.name] = currentValue - (rightValue as any)
+                    currentValue = this.getPropertyAccessValue(propAccess, context)
+                    this.setPropertyAccessValue(propAccess, currentValue - (rightValue as any), context)
                     break;
             }
             return
@@ -174,13 +167,13 @@ export class Engine {
                 let ident = (expression as Identifier).name
                 return context[ident]
             case NodeType.PropertyAccess:
-                return this.resolvePropertyAccess(expression as PropertyAccess, context)
+                return this.getPropertyAccessValue(expression as PropertyAccess, context)
             case NodeType.Aggregate:
                 return this.computeAggregate(expression as Aggregate, context)
         }
     }
 
-    private resolvePropertyAccess(reference: PropertyAccess, context : {[ key : string] : any}) : any {
+    private getPropertyAccessValue(reference: PropertyAccess, context : {[ key : string] : any}) : any {
         let currentContext = context[reference.object.name]
         for(let i = 0; i < reference.references.length; i++) {
             let ref = reference.references[i]
@@ -191,6 +184,25 @@ export class Engine {
             }
         }
         return currentContext
+    }
+    
+    private setPropertyAccessValue(reference: PropertyAccess, value : any, context : {[ key : string] : any}) {
+        let currentContext = context[reference.object.name]
+        for(let i = 0; i < reference.references.length - 1; i++) {
+            let ref = reference.references[i]
+            if(ref.nodeType === NodeType.Identifier) {
+                currentContext = currentContext[(ref as Identifier).name]
+            } else {
+                currentContext = currentContext[this.evaluateExpression((ref as IndexAccess).index, context)]
+            }
+        }
+
+        let final = reference.references[reference.references.length - 1];
+        if(final.nodeType === NodeType.Identifier) {
+            currentContext[(final as Identifier).name] = value
+        } else {
+            currentContext[this.evaluateExpression((final as IndexAccess).index, context)] = value
+        }
     }
 
     private computeAggregate(aggregate: Aggregate, context: {[ key : string] : any}) {

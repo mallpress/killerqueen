@@ -37,6 +37,16 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(99)
     })
+        
+    it("Test compound function calls", () => {
+        let text =  '$cost = MAX(el.apples, 5)'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 102, 'el' : {'apples' : 40}}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(40)
+    })
     
     it("Test IF true THEN", () => {
         let text =  'IF (true) THEN $cost = 100'
@@ -166,5 +176,15 @@ describe("Simple parser tests", () => {
         var ctx = {'$temp' : null, 'a' : {'b' : [[55]]}}
         engine.execute(ctx)
         expect(ctx['$temp']).toBe(55)
+    })
+
+    it("Test object property set access", () => {
+        let text =  '$temp.temp = 5'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : {'temp' : 1}}
+        engine.execute(ctx)
+        expect(ctx['$temp']['temp']).toBe(5)
     })
 })
