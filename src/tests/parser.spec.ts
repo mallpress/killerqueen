@@ -219,7 +219,6 @@ describe("Simple parser tests", () => {
         ///@ts-ignore
         expect(ctx['$temp']['a']).toBe(1)
     })
-
     
     it("Test evaluation of nested object", () => {
         let text =  "$temp = {'a' : {'a' : 2}}"
@@ -230,5 +229,16 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         ///@ts-ignore
         expect(ctx['$temp']['a']).toEqual({'a' : 2})
+    })
+        
+    it("Test function call as operation", () => {
+        let text =  "APPEND(vals, 1)"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'vals' : [1] }
+        engine.execute(ctx)
+        ///@ts-ignore
+        expect(ctx['vals']).toEqual([1, 1])
     })
 })

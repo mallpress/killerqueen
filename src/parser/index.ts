@@ -260,7 +260,11 @@ export class Parser {
         return seq;
     }
 
-    private parseOperation(stream: TokenStream): Operation {
+    private parseOperation(stream: TokenStream): Operation | FunctionCall {
+        let nextToken = stream.peek(1)
+        if(nextToken.type === TokenType.ParenOpen) {
+            return this.parseFunctionCall(stream)
+        }
         let ref = this.parseReference(stream)
 
         if(!stream.hasNext()) throw new ParserError(`parser error, assignment expected`, 0)

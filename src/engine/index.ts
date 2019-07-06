@@ -29,31 +29,24 @@ export class Engine {
     }
 
     public execute(context : {[ key : string] : any}) {
-        for(let i = 0; i < this.ast.nodes.length; i++) {
-            let line = this.ast.nodes[i]
-            switch(line.nodeType) {
-                case NodeType.Operation:
-                    this.executeOperation(line as Operation, context)
-                    break;
-                case NodeType.Branch:
-                    this.evaluateBranch(line as Branch, context)
-                    break;
-                case NodeType.ForLoop:
-                    this.executeForLoop(line as ForLoop, context)
-                    break;
-            }
-        }
+        this.executeSequence(this.ast, context)
     }
 
     public executeSequence(sequence : Sequence, context : {[ key : string] : any}) {
         for(let i = 0; i < sequence.nodes.length; i++) {
             let node = sequence.nodes[i]
             switch(node.nodeType) {
+                case NodeType.Operation:
+                    this.executeOperation(node as Operation, context)
+                    break;
                 case NodeType.Branch:
                     this.evaluateBranch(node as Branch, context)
                     break;
-                case NodeType.Operation:
-                    this.executeOperation(node as Operation, context)
+                case NodeType.ForLoop:
+                    this.executeForLoop(node as ForLoop, context)
+                    break;
+                case NodeType.FunctionCall:
+                    this.executeFunction(node as FunctionCall, context)
                     break;
             }
         }
@@ -268,6 +261,10 @@ export class Engine {
                 return Math.floor(this.evaluateExpression(call.parameters[0], context))
             case 'LOG':
                 log(this.evaluateExpression(call.parameters[0], context))
+                break;
+            case 'APPEND':
+                let array = this.evaluateExpression(call.parameters[0], context) as any[]
+                array.push(this.evaluateExpression(call.parameters[1], context) as any)
                 break;
             case 'GETNODE':
                 let nodeModel = context['model']
