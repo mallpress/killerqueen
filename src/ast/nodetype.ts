@@ -1,7 +1,7 @@
 export enum NodeType {
     Branch = "Branch",
-    Condition = "Condition",
-    ConditionGroup = "ConditionGroup",
+    BooleanExpression = "BooleanExpression",
+    BooleanExpressionGroup = "BooleanExpressionGroup",
     Aggregate = "Aggregate",
     Operation = "Operation",
     Sequence = "Sequence",

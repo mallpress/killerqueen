@@ -1,7 +1,7 @@
 import { Token } from "../token";
 import { TokenType } from "../tokentype";
 import { BooleanOperator } from "../ast/booleanoperator";
-import { Condition } from "../ast/condition";
+import { BooleanExpression } from "../ast/booleanexpression";
 import { Sequence } from "../ast/sequence";
 import { Operation } from "../ast/operation";
 import { ParserError } from "./parsererror";
@@ -9,7 +9,7 @@ import { Branch } from "../ast/branch";
 import { TokenStream } from "../tokenstream";
 import { Node } from "../ast/node";
 import { BinaryOperator } from "../ast/enums/binaryoperator";
-import { ConditionGroup } from "../ast/conditiongroup";
+import { BooleanExpressionGroup } from "../ast/booleanexpressiongroup";
 import { NodeType } from "../ast/nodetype";
 import { Identifier } from "../ast/identifier";
 import { PropertyAccess } from "../ast/propertyaccess";
@@ -57,7 +57,7 @@ export class Parser {
     private parseIfStatement(stream : TokenStream) : Node {
         // we will always get the 'IF'
         stream.consume();
-        let conds = this.parseConditionals(stream)
+        let conds = this.parseBooleanExpressions(stream)
         let currentToken = stream.consume()
         if(currentToken.type !== TokenType.Then) {
             throw new ParserError(`could not parse conditional expected THEN expected, got ${currentToken.value}`, currentToken.position)
@@ -75,7 +75,7 @@ export class Parser {
         return branch
     }
 
-    private parseConditionals(stream: TokenStream, parenOpen: number = 0): Node {
+    private parseBooleanExpressions(stream: TokenStream, parenOpen: number = 0): Node {
         let prevNode: Node | null = null
         let finished = false
         let prevInGroup = false;
@@ -99,25 +99,25 @@ export class Parser {
                             break;
                     }
                     if (!prevNode) throw new ParserError(`${currentToken.value} found, with nothing preceeding`, currentToken.position)
-                    let newGroup = new ConditionGroup(prevNode)
+                    let newGroup = new BooleanExpressionGroup(prevNode)
                     newGroup.operator = operator
                     let nextToken = stream.peek()
                     if (!nextToken) throw new ParserError(`${currentToken.value} found, with nothing after it`, currentToken.position)
 
                     if (nextToken.type === TokenType.ParenOpen) {
-                        newGroup.right = this.parseConditionals(stream, parenOpen);
+                        newGroup.right = this.parseBooleanExpressions(stream, parenOpen);
                     } else {
-                        let newCond = this.parseConditional(stream)
+                        let newCond = this.parseBooleanExpression(stream)
                         // need to handle the case of A || B && C, so we steal B
                         // from the previous group and create a new group with B as left and set
                         // the previous group's right to the new group this gives up A || (B && C)
                         // this should only be done if the previous expression was not
                         // in brackets, as that should be treated as fixeds
                         if (currentToken.type === TokenType.And && !prevInGroup) {
-                            if (prevNode.nodeType == NodeType.ConditionGroup) {
-                                let prevGroup = prevNode as ConditionGroup;
+                            if (prevNode.nodeType == NodeType.BooleanExpressionGroup) {
+                                let prevGroup = prevNode as BooleanExpressionGroup;
                                 let newLeft = prevGroup.right as Node;
-                                newGroup = new ConditionGroup(newLeft)
+                                newGroup = new BooleanExpressionGroup(newLeft)
                                 newGroup.operator = operator
                                 newGroup.right = newCond
                                 prevGroup.right = newGroup
@@ -136,7 +136,7 @@ export class Parser {
                 case TokenType.ParenOpen:
                     parenOpen++;
                     stream.consume()
-                    prevNode = this.parseConditionals(stream, parenOpen);
+                    prevNode = this.parseBooleanExpressions(stream, parenOpen);
                     prevInGroup = true;
                     break;
                 case TokenType.ParenClose:
@@ -149,7 +149,7 @@ export class Parser {
                     finished = true;
                     break;
                 default:
-                    prevNode = this.parseConditional(stream)
+                    prevNode = this.parseBooleanExpression(stream)
                     prevInGroup = false
                     break;
             }
@@ -157,7 +157,7 @@ export class Parser {
         return prevNode!
     }
 
-    private parseConditional(stream: TokenStream): Node {
+    private parseBooleanExpression(stream: TokenStream): BooleanExpression | BooleanLiteral {
         let operator = BooleanOperator.DoubleEquals
         let currentToken = stream.peek()
         let left = null;
@@ -173,12 +173,10 @@ export class Parser {
                 break;
             case TokenType.True:
                 stream.consume()
-                left = new BooleanLiteral(true)
-                break;
+                return new BooleanLiteral(true)
             case TokenType.False:
                 stream.consume()
-                left = new BooleanLiteral(false)
-                break;
+                return new BooleanLiteral(false)
             case TokenType.Identifier:
                 left = this.parseReference(stream)
                 break
@@ -211,7 +209,7 @@ export class Parser {
                 operator = BooleanOperator.In
                 break
             default:
-                return left
+                throw new ParserError(`parse error, boolean operator expected, found ${nextToken.value}`, nextToken.position)
         }
         stream.consume()
 
@@ -240,7 +238,7 @@ export class Parser {
                 throw new ParserError(`parse error, conditional type expected, found ${currentToken.value}`, currentToken.position)
         }
 
-        return new Condition(left, operator, right);
+        return new BooleanExpression(left, operator, right);
     }
 
     //#endregion
@@ -293,6 +291,7 @@ export class Parser {
         let currentExpression = null
         while(stream.hasNext()) {
             currentToken = stream.peek()
+            let startPosition = stream.getPosition()
             switch(currentToken.type) {
                 case TokenType.String:
                     stream.consume()
@@ -355,6 +354,18 @@ export class Parser {
                         currentExpression = new Aggregate(toReturn, operator)
                     }
                     continue
+                case TokenType.And:
+                case TokenType.Or:
+                case TokenType.Not:
+                case TokenType.DoubleEquals:
+                case TokenType.LessThan:
+                case TokenType.LessThanEqual:
+                case TokenType.GreaterThan:
+                case TokenType.GreaterThanEqual:
+                case TokenType.NotEquals:
+                    // if it is actually a conditional we need to parse it as one
+                    stream.setPosition(startPosition)
+                    return this.parseBooleanExpressions(stream)
                 default:
                     if(currentExpression !== null) {
                         currentExpression.right = toReturn

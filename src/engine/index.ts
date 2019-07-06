@@ -10,8 +10,8 @@ import { NumericLiteral } from "../ast/numericliteral";
 import { StringLiteral } from "../ast/stringliteral";
 import { BooleanLiteral } from "../ast/booleanliteral";
 import { FunctionCall } from "../ast/functioncall";
-import { ConditionGroup } from "../ast/conditiongroup";
-import { Condition } from "../ast/condition";
+import { BooleanExpressionGroup } from "../ast/booleanexpressiongroup";
+import { BooleanExpression } from "../ast/booleanexpression";
 import { BinaryOperator } from "../ast/enums/binaryoperator";
 import { BooleanOperator } from "../ast/booleanoperator";
 import { Aggregate } from "../ast/aggregate";
@@ -108,10 +108,10 @@ export class Engine {
         switch(conditions.nodeType) {
             case NodeType.BooleanLiteral:
                 return (conditions as BooleanLiteral).value
-            case NodeType.Condition: 
-                return this.evaluateCondition(conditions as Condition, context)
-            case NodeType.ConditionGroup:
-                let condGroup = conditions as ConditionGroup
+            case NodeType.BooleanExpression: 
+                return this.evaluateCondition(conditions as BooleanExpression, context)
+            case NodeType.BooleanExpressionGroup:
+                let condGroup = conditions as BooleanExpressionGroup
                 let leftResult = this.evaluateConditions(condGroup.left, context)
                 let rightResult = true
                 if (condGroup.right) {
@@ -131,8 +131,8 @@ export class Engine {
 
     private evaluateCondition(condition : Node, context : {[key : string]  : any}) : boolean {
         switch(condition.nodeType) {
-            case NodeType.Condition:
-                let cond = condition as Condition
+            case NodeType.BooleanExpression:
+                let cond = condition as BooleanExpression
                 let left = this.evaluateExpression(cond.left, context)
                 let right = this.evaluateExpression(cond.right, context)
                 switch(cond.operator) {
@@ -172,6 +172,9 @@ export class Engine {
                 return this.computeAggregate(expression as Aggregate, context)
             case NodeType.Object:
                 return this.createObject(expression as ObjectNode, context)
+            case NodeType.BooleanExpression:
+            case NodeType.BooleanExpressionGroup:
+                return this.evaluateConditions(expression, context)
         }
     }
 

@@ -20,4 +20,12 @@ export class TokenStream {
     public hasNext(count : number = 0) : boolean {
         return this.position + count < this.tokens.length
     }
+
+    public getPosition() : number {
+        return this.position
+    }
+
+    public setPosition(pos: number) : void {
+        this.position = pos;
+    }
 }

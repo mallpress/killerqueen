@@ -30,7 +30,7 @@ describe("Simple parser tests", () => {
     })
         
     it("Test boolean assignment statment with bool operator", () => {
-        let text = '$value = true && false'
+        let text = '$value = true || false'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
