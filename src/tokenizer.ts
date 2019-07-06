@@ -56,6 +56,8 @@ export class Tokenizer {
             new WordTokenizer(TokenType.In, "in"),
             new WordTokenizer(TokenType.For, "for"),
             new WordTokenizer(TokenType.Each, "each"),
+            new WordTokenizer(TokenType.True, "true"),
+            new WordTokenizer(TokenType.False, "false"),
             new IdentifierTokenizer(),
         ];
     }
@@ -64,16 +66,17 @@ export class Tokenizer {
         let toReturn = new Array<Token>()
         let currentPos = 0;
         while (currentPos < input.length) {
-            let tokenized = false;
-            this.tokenizers.forEach(tk => {
-              if (tokenized) {return;}
+          let tokenized = false
+            for(let i = 0; i < this.tokenizers.length; i++) {
+              let tk = this.tokenizers[i]
               let res = tk.nextToken(input, currentPos);
               if(res) {
-                tokenized = true;
                 currentPos += res.consumedChar;
                 if(!res.skip) toReturn.push(res.token)
+                tokenized = true
+                break
               }
-            });
+            }
             if (!tokenized) {
               throw new TypeError('I dont know what this character is: ' + input[currentPos]);
             }

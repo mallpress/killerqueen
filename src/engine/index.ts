@@ -60,9 +60,7 @@ export class Engine {
     }
     
     private executeOperation(operation: Operation, context: {[ key : string] : any}) {
-        console.log('init');
         let rightValue = this.evaluateExpression(operation.expression, context)
-
         if(operation.reference.nodeType === NodeType.PropertyAccess) {
             let propAccess = operation.reference as PropertyAccess
             let currentValue = undefined

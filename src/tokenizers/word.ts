@@ -22,7 +22,7 @@ export class WordTokenizer extends BaseTokenizer {
             value += char
         }
 
-        if(WordTokenizer.nonWordRegex.test(input[current + this.word.length])) {
+        if(current + this.word.length === input.length || WordTokenizer.nonWordRegex.test(input[current + this.word.length])) {
             return new TokenResult(this.word.length, new Token(this.tokenType, value, current))
         }
         return null

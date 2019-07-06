@@ -10,7 +10,7 @@ describe("Simple parser tests", () => {
 
     //text = text.replace(/\;/g, '\r\n')    
     it("Test basic assignment", () => {
-        let text =  '$cost = 5'
+        let text = '$cost = 5'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -18,8 +18,29 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(5)
     })
+    
+    it("Test boolean assignment statment", () => {
+        let text = '$value = true'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$value' : 99}
+        engine.execute(ctx)
+        expect(ctx['$value']).toBe(true)
+    })
+        
+    it("Test boolean assignment statment with bool operator", () => {
+        let text = '$value = true && false'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$value' : 99}
+        engine.execute(ctx)
+        expect(ctx['$value']).toBe(true)
+    })
+
     it("Test function call", () => {
-        let text =  '$cost = MAX(1, 0)'
+        let text = '$cost = MAX(1, 0)'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -29,7 +50,7 @@ describe("Simple parser tests", () => {
     })
     
     it("Test compound function calls", () => {
-        let text =  '$cost = MAX(1, MAX(99, 5))'
+        let text = '$cost = MAX(1, MAX(99, 5))'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -39,7 +60,7 @@ describe("Simple parser tests", () => {
     })
         
     it("Test compound function calls", () => {
-        let text =  '$cost = MAX(el.apples, 5)'
+        let text = '$cost = MAX(el.apples, 5)'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -49,7 +70,7 @@ describe("Simple parser tests", () => {
     })
     
     it("Test IF true THEN", () => {
-        let text =  'IF (true) THEN $cost = 100'
+        let text = 'IF (true) THEN $cost = 100'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -59,7 +80,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test IF false THEN", () => {
-        let text =  'IF (false) THEN $cost = 100'
+        let text = 'IF (false) THEN $cost = 100'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -69,7 +90,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test IF THEN ELSE", () => {
-        let text =  'IF ($cost == 1) THEN $cost = 100 ELSE $cost = 99'
+        let text = 'IF ($cost == 1) THEN $cost = 100 ELSE $cost = 99'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -79,7 +100,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test compound condition statement", () => {
-        let text =  'IF ($cost == 1 && $cost == 2) THEN $cost = 100'
+        let text = 'IF ($cost == 1 && $cost == 2) THEN $cost = 100'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -89,7 +110,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test more complex condition statments", () => {
-        let text =  'IF ($cost == 1 && $cost == 2 || true) THEN $cost = 100'
+        let text = 'IF ($cost == 1 && $cost == 2 || true) THEN $cost = 100'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -99,7 +120,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic aggregates", () => {
-        let text =  '$cost = 1 + 5'
+        let text = '$cost = 1 + 5'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -109,7 +130,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test aggregate expressions as parameters", () => {
-        let text =  '$cost = MAX($cost - 5, 0)'
+        let text = '$cost = MAX($cost - 5, 0)'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -119,7 +140,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test aggregate expressions as parameters with negative numbers", () => {
-        let text =  '$cost = MAX(1, ABS(MIN(1, -99)) + 1)'
+        let text = '$cost = MAX(1, ABS(MIN(1, -99)) + 1)'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -129,7 +150,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic for loop with itterations", () => {
-        let text =  'FOR (10) $i += 1'
+        let text = 'FOR (10) $i += 1'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -139,7 +160,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic for loop with itterations using expression", () => {
-        let text =  'FOR ($count + 1) $i += 1'
+        let text = 'FOR ($count + 1) $i += 1'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -149,7 +170,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic for each loop", () => {
-        let text =  'FOR EACH [0, 1, 2, 3] $i += $val'
+        let text = 'FOR EACH [0, 1, 2, 3] $i += $val'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -159,7 +180,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic for each loop", () => {
-        let text =  'FOR EACH [\'a\',\'b\'] $i = $val'
+        let text = 'FOR EACH [\'a\',\'b\'] $i = $val'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -169,7 +190,7 @@ describe("Simple parser tests", () => {
     })
     
     it("Test array access", () => {
-        let text =  '$temp = a.b[0][0]'
+        let text = '$temp = a.b[0][0]'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
@@ -179,7 +200,7 @@ describe("Simple parser tests", () => {
     })
 
     it("Test object property set access", () => {
-        let text =  '$temp.temp = 5'
+        let text = '$temp.temp = 5'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
