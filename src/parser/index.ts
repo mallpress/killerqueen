@@ -22,6 +22,8 @@ import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 import { ForLoop } from "../ast/forloop";
 import { IndexAccess } from "../ast/indexaccess";
+import { ObjectNode } from "../ast/objectnode";
+import { ObjectProperty } from "../ast/objectproperty";
 
 export class Parser {
     constructor() {
@@ -314,6 +316,9 @@ export class Parser {
                         toReturn = this.parseReference(stream)
                     }
                     break;
+                case TokenType.BraceOpen:
+                    toReturn = this.parseObject(stream)
+                    break;
                 default:
                     throw new ParserError(`parser error, expression, found ${currentToken.value}`, currentToken.position)
             }
@@ -442,6 +447,36 @@ export class Parser {
             default:
                 throw new ParserError(`parser error, for loop invalid, array or itterations expected`, nextToken.position)
         }
+    }
+
+    private parseObject(stream : TokenStream) {
+        stream.consume()
+        let object = new ObjectNode()
+        let finished = false;
+        while(stream.hasNext() || finished) {
+            let nameToken = stream.peek()
+            if(nameToken.type === TokenType.BraceClose) break;
+            if(nameToken.type !== TokenType.String) {
+                throw new ParserError(`parser error, expected string, found ${nameToken.value}`, nameToken.position)
+            }
+            stream.consume()
+            let nextToken = stream.consume()
+            if(nextToken.type !== TokenType.Colon) {
+                throw new ParserError(`parser error, expected :, found ${nextToken.value}`, nextToken.position)
+            }
+
+            let value = this.parseExpression(stream)
+            object.properties.push(new ObjectProperty(nameToken.value, value))
+            nextToken = stream.consume()
+            switch(nextToken.type) {
+                case TokenType.Comma:
+                    continue
+                case TokenType.SquareClose:
+                    finished = true
+                    break;
+            }
+        }
+        return object
     }
 
     //#endregion

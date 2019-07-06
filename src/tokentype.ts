@@ -38,5 +38,6 @@ export enum TokenType {
     SemiColon,
     LineBreak,
     For,
-    Each
+    Each,
+    Colon,
 }

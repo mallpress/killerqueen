@@ -18,6 +18,7 @@ import { Aggregate } from "../ast/aggregate";
 import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 import { ForLoop } from "../ast/forloop";
 import { IndexAccess } from "../ast/indexaccess";
+import { ObjectNode } from "../ast/objectnode";
 
 declare var log : (s : string) => void
 
@@ -59,6 +60,7 @@ export class Engine {
     }
     
     private executeOperation(operation: Operation, context: {[ key : string] : any}) {
+        console.log('init');
         let rightValue = this.evaluateExpression(operation.expression, context)
 
         if(operation.reference.nodeType === NodeType.PropertyAccess) {
@@ -170,6 +172,8 @@ export class Engine {
                 return this.getPropertyAccessValue(expression as PropertyAccess, context)
             case NodeType.Aggregate:
                 return this.computeAggregate(expression as Aggregate, context)
+            case NodeType.Object:
+                return this.createObject(expression as ObjectNode, context)
         }
     }
 
@@ -218,6 +222,15 @@ export class Engine {
             case MathematicalOperator.Divide:
                 return left / right
         }
+    }
+
+    private createObject(object : ObjectNode, context : {[ key : string] : any}) {
+        let toReturn : {[ key : string] : any} = {}
+        for(let i = 0; i < object.properties.length; i++) {
+            let prop = object.properties[i]
+            toReturn[prop.name] = this.evaluateExpression(prop.value, context)
+        }
+        return toReturn
     }
 
     private executeForLoop(loop : ForLoop, context: {[ key : string] : any}) {

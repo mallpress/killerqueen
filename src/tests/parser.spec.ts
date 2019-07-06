@@ -187,4 +187,27 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$temp']['temp']).toBe(5)
     })
+
+    it("Test evaluation of object", () => {
+        let text =  "$temp = {'a' : 1 }"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : undefined }
+        engine.execute(ctx)
+        ///@ts-ignore
+        expect(ctx['$temp']['a']).toBe(1)
+    })
+
+    
+    it("Test evaluation of nested object", () => {
+        let text =  "$temp = {'a' : {'a' : 2}}"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : undefined }
+        engine.execute(ctx)
+        ///@ts-ignore
+        expect(ctx['$temp']['a']).toEqual({'a' : 2})
+    })
 })

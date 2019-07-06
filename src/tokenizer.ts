@@ -40,6 +40,7 @@ export class Tokenizer {
             new SymbolTokenizer(TokenType.Divide, "/"),
             new SymbolTokenizer(TokenType.Multiply, "*"),
             new SymbolTokenizer(TokenType.SemiColon, ";"),
+            new SymbolTokenizer(TokenType.Colon, ":"),
             new SymbolTokenizer(TokenType.Dot, "."),
             new SymbolTokenizer(TokenType.And, "&&"),
             new WordTokenizer(TokenType.And, "and"),

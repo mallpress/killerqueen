@@ -13,4 +13,6 @@ export enum NodeType {
     NumericLiteral = "NumericLiteral",
     BooleanLiteral = "BooleanLiteral",
     ForLoop = "ForLoop",
+    Object = "Object",
+    ObjectProperty = "ObjectProperty",
 }
