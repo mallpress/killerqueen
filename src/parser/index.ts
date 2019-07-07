@@ -468,7 +468,7 @@ export class Parser {
         stream.consume()
         let object = new ObjectNode()
         let finished = false;
-        while(stream.hasNext() || finished) {
+        while(stream.hasNext() && !finished) {
             let nameToken = stream.peek()
             if(nameToken.type === TokenType.BraceClose) break;
             if(nameToken.type !== TokenType.String) {
@@ -486,7 +486,7 @@ export class Parser {
             switch(nextToken.type) {
                 case TokenType.Comma:
                     continue
-                case TokenType.SquareClose:
+                case TokenType.BraceClose:
                     finished = true
                     break;
             }

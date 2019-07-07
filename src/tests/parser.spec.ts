@@ -230,7 +230,7 @@ describe("Simple parser tests", () => {
         ///@ts-ignore
         expect(ctx['$temp']['a']).toEqual({'a' : 2})
     })
-        
+
     it("Test function call as operation", () => {
         let text =  "APPEND(vals, 1)"
         let tokens = tokenizer.tokenize(text);
@@ -238,7 +238,26 @@ describe("Simple parser tests", () => {
         var engine = new Engine(ast)
         var ctx = {'vals' : [1] }
         engine.execute(ctx)
-        ///@ts-ignore
         expect(ctx['vals']).toEqual([1, 1])
+    })
+
+    it("Test function with compount parameters", () => {
+        let text =  "APPEND($values, {'a': 'a', 'b' : {'a' : 1}})"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$values' : [] }
+        engine.execute(ctx)
+        expect(ctx['$values']).toEqual([{'a': 'a', 'b' : {'a' : 1}}])
+    })
+
+    it("Test for each with function and object usage", () => {
+        let text =  "FOR EACH ['test1', 'test2'] APPEND($values, {'a': $val, 'b' : {'a' : 1}})"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$values' : [] }
+        engine.execute(ctx)
+        expect(ctx['$values']).toEqual([{'a': 'test1', 'b' : {'a' : 1}}, {'a': 'test2', 'b' : {'a' : 1}}])
     })
 })
