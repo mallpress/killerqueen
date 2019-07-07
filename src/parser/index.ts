@@ -524,7 +524,7 @@ export class Parser {
                     finished = true;
                     break;
                 default:
-                    throw new ParserError(`parse error, string expected, found ${ref.value}`, ref.position)
+                    throw new ParserError(`parse error, string or number expected, found ${ref.value}`, ref.position)
             }
         }
         if (toReturn.length === 0) throw new ParserError(`parse error, empty array found`, currentToken.position)

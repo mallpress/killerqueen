@@ -260,4 +260,52 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$values']).toEqual([{'a': 'test1', 'b' : {'a' : 1}}, {'a': 'test2', 'b' : {'a' : 1}}])
     })
+
+    it("Test tokenisation failes", () => {
+        let text =  "$a = %"
+        expect(() => tokenizer.tokenize(text)).toThrowError()
+    })
+
+    it("Test for bad object parsing error", () => {
+        let text =  "$a = {'a'.}"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError('')
+    })
+    
+    it("Test for unterminted string error", () => {
+        let text =  "$a = 'sdfsf"
+        expect(() => tokenizer.tokenize(text)).toThrowError('unterminated string')
+    })
+
+    it("Test parsing decimal and evaluation", () => {
+        let text =  "$a = 0.9992"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$a' : 0 }
+        engine.execute(ctx)
+        expect(ctx['$a']).toEqual(0.9992)
+    })
+
+    it("Test parsing negative decimal", () => {
+        let text =  "$a = -0.9992"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$a' : 0 }
+        engine.execute(ctx)
+        expect(ctx['$a']).toEqual(-0.9992)
+    })
+
+    it("Test parsing conditional without THEN failing", () => {
+        let text =  "IF (true) FOR EACH"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError()
+    })
+    
+    it("Test parsing array failing for non string / number", () => {
+        let text =  "$a = ['a', temp]"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError()
+    })
 })
