@@ -157,7 +157,7 @@ export class Parser {
         return prevNode!
     }
 
-    private parseBooleanExpression(stream: TokenStream): BooleanExpression | BooleanLiteral {
+    private parseBooleanExpression(stream: TokenStream): BooleanExpression | BooleanLiteral | Identifier | PropertyAccess {
         let operator = BooleanOperator.DoubleEquals
         let currentToken = stream.peek()
         let left = null;
@@ -184,6 +184,8 @@ export class Parser {
                 throw new ParserError(`parse error, conditional type expected, found ${currentToken.value}`, currentToken.position)
         }
 
+        if(!stream.hasNext()) return left as Identifier
+
         let nextToken = stream.peek()
 
         switch (nextToken.type) {
@@ -208,6 +210,14 @@ export class Parser {
             case TokenType.In:
                 operator = BooleanOperator.In
                 break
+            case TokenType.And:
+            case TokenType.Or:
+            case TokenType.Not:
+                // we play it a bit fast or loose here as the user can
+                // have something like 1 || false .... which JS will handle 
+                // should we handle? TODO: Think about this
+                ///@ts-ignore
+                return left
             default:
                 throw new ParserError(`parse error, boolean operator expected, found ${nextToken.value}`, nextToken.position)
         }

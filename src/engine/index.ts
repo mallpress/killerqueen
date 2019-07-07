@@ -118,6 +118,9 @@ export class Engine {
                         return leftResult && !rightResult
                     }
                 }
+            case NodeType.Identifier:
+            case NodeType.PropertyAccess:
+                return this.evaluateExpression(conditions, context)
         }
         return false
     }

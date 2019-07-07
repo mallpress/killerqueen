@@ -19,6 +19,146 @@ describe("Simple parser tests", () => {
         expect(ctx['$cost']).toBe(5)
     })
     
+    it("Test boolean assignment", () => {
+        let text = '$return = true NOT false'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test less than check", () => {
+        let text = '$return = 1 < 2'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+
+    it("Test greater than check", () => {
+        let text = '$return = 2 > 1'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test greater than equal check", () => {
+        let text = '$return = 2 >= 2 && 2 >= 1'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test less than equal check", () => {
+        let text = '$return = 2 <= 2 && 1 <= 2'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test string equality check", () => {
+        let text = "$return = 'a' == 'a'"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test string not equals check", () => {
+        let text = "$return = 'a' != 'a'"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : true}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(false)
+    })
+
+    it("Test divide", () => {
+        let text = "$return = 4 / 2"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : 9}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(2)
+    })
+    
+    it("Test divide then multiply", () => {
+        let text = "$return = 4 / 2 * 2"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : 9}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(4)
+    })
+
+    it("Test mutliply", () => {
+        let text = "$return = 4 * 2"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : 9}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(8)
+    })
+    
+    it("Test equality check of two Identifiers", () => {
+        let text = "$return = isTrue == isFalse"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false, 'isTrue' : true, 'isFalse' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(false)
+    })
+    
+    it("Test logic statement of two Identifiers", () => {
+        let text = "$return = isTrue || isFalse"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false, 'isTrue' : true, 'isFalse' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test logic grouping", () => {
+        let text = "$return = true && (true || false)"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test logic grouping", () => {
+        let text = "$return = false || true && true"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
     it("Test boolean assignment statment", () => {
         let text = '$value = true'
         let tokens = tokenizer.tokenize(text);
@@ -128,6 +268,26 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(6)
     })
+    
+    it("Test plus equals operation", () => {
+        let text = '$cost += 1'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 1}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(2)
+    })
+
+    it("Test minus equals operation", () => {
+        let text = '$cost -= 1'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 1}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(0)
+    })
 
     it("Test aggregate expressions as parameters", () => {
         let text = '$cost = MAX($cost - 5, 0)'
@@ -137,6 +297,26 @@ describe("Simple parser tests", () => {
         var ctx = {'$cost' : 10}
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(5)
+    })
+
+    it("Test ceiling func", () => {
+        let text = '$cost = CEIL(0.5)'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 10}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(1)
+    })
+
+    it("Test floor func", () => {
+        let text = '$cost = FLOOR(0.5)'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 10}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(0)
     })
 
     it("Test aggregate expressions as parameters with negative numbers", () => {
@@ -160,13 +340,13 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic for loop with itterations using expression", () => {
-        let text = 'FOR ($count + 1) $i += 1'
+        let text = 'FOR ($count + 1) $i -= 1'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
         var ctx = {'$i' : 0, '$count': 5}
         engine.execute(ctx)
-        expect(ctx['$i']).toBe(6)
+        expect(ctx['$i']).toBe(-6)
     })
 
     it("Test basic for each loop", () => {
@@ -207,6 +387,26 @@ describe("Simple parser tests", () => {
         var ctx = {'$temp' : {'temp' : 1}}
         engine.execute(ctx)
         expect(ctx['$temp']['temp']).toBe(5)
+    })
+
+    it("Test object property set access +=", () => {
+        let text = '$temp.temp += 5'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : {'temp' : 1}}
+        engine.execute(ctx)
+        expect(ctx['$temp']['temp']).toBe(6)
+    })
+
+    it("Test object property set access -=", () => {
+        let text = '$temp.temp -= 5'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : {'temp' : 1}}
+        engine.execute(ctx)
+        expect(ctx['$temp']['temp']).toBe(-4)
     })
 
     it("Test evaluation of object", () => {
