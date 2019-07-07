@@ -289,17 +289,7 @@ export class Engine {
         let res = undefined
         for(let i = 0; i < args.length; i++) {
             let exp = args[i]
-            let val = undefined
-            switch(exp.nodeType) {
-                case NodeType.NumericLiteral:
-                case NodeType.FunctionCall:
-                    val = this.evaluateExpression(exp, context)
-                    break;
-                case NodeType.PropertyAccess:
-                    let prop = (exp as PropertyAccess)
-                    val = this.evaluateExpression(prop, context)
-                    break;
-            }
+            let val = this.evaluateExpression(exp, context)
             if(res === undefined || val < res) res = val
         }
         return res
