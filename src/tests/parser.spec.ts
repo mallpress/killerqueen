@@ -29,6 +29,26 @@ describe("Simple parser tests", () => {
         expect(ctx['$return']).toBe(true)
     })
     
+    it("Test boolean comparison true", () => {
+        let text = '$return = $true == true'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false, '$true' : true}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
+    it("Test boolean comparison", () => {
+        let text = '$return = $false == false'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : false, '$false' : false}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
     it("Test less than check", () => {
         let text = '$return = 1 < 2'
         let tokens = tokenizer.tokenize(text);
@@ -218,6 +238,16 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$cost']).toBe(100)
     })
+        
+    it("Test IF true THEN with subsequent statment", () => {
+        let text = 'IF (true) THEN $cost = 100\r\n$cost = 4'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$cost' : 102}
+        engine.execute(ctx)
+        expect(ctx['$cost']).toBe(4)
+    })
 
     it("Test IF false THEN", () => {
         let text = 'IF (false) THEN $cost = 100'
@@ -350,23 +380,29 @@ describe("Simple parser tests", () => {
     })
 
     it("Test basic for each loop", () => {
-        let text = 'FOR EACH [0, 1, 2, 3] $i += $val'
+        let text = 'FOR EACH [0, 1, 2, 3] $i += $val; $i+= 2'
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
         var ctx = {'$i' : 0}
         engine.execute(ctx)
-        expect(ctx['$i']).toBe(6)
+        expect(ctx['$i']).toBe(14)
     })
 
     it("Test basic for each loop", () => {
-        let text = 'FOR EACH [\'a\',\'b\'] $i = $val'
+        let text = "FOR EACH ['a','b'] $i = $val"
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
         var ctx = {'$i' : 0}
         engine.execute(ctx)
         expect(ctx['$i']).toBe('b')
+    })  
+
+    it("Test invalid for loop parameter", () => {
+        let text = "FOR EACH 'a' $i = $val"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError()
     })
     
     it("Test array access", () => {
@@ -387,6 +423,16 @@ describe("Simple parser tests", () => {
         var ctx = {'$temp' : {'temp' : 1}}
         engine.execute(ctx)
         expect(ctx['$temp']['temp']).toBe(5)
+    })   
+
+    it("Test object property set access multiple levels", () => {
+        let text = '$temp.temp1.temp2.temp3 = 5'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : {'temp1' : {'temp2' : {'temp3' : 1}}}}
+        engine.execute(ctx)
+        expect(ctx['$temp']['temp1']['temp2']['temp3']).toBe(5)
     })
 
     it("Test object property set access +=", () => {
@@ -461,6 +507,16 @@ describe("Simple parser tests", () => {
         expect(ctx['$values']).toEqual([{'a': 'test1', 'b' : {'a' : 1}}, {'a': 'test2', 'b' : {'a' : 1}}])
     })
 
+    it("Test for each using variable as param", () => {
+        let text =  "FOR EACH $inputs APPEND($values, {'a': $val, 'b' : {'a' : 1}})"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$inputs' : ['test1', 'test2'], '$values' : [] }
+        engine.execute(ctx)
+        expect(ctx['$values']).toEqual([{'a': 'test1', 'b' : {'a' : 1}}, {'a': 'test2', 'b' : {'a' : 1}}])
+    })
+
     it("Test tokenisation failes", () => {
         let text =  "$a = %"
         expect(() => tokenizer.tokenize(text)).toThrowError()
@@ -507,5 +563,10 @@ describe("Simple parser tests", () => {
         let text =  "$a = ['a', temp]"
         let tokens = tokenizer.tokenize(text);
         expect(() => parser.parse(tokens)).toThrowError()
+    })
+    
+    it("Test parsing multiple decimals in a almost number", () => {
+        let text =  "$a = 99..3"
+        expect(() => tokenizer.tokenize(text)).toThrowError()
     })
 })

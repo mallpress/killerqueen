@@ -6,7 +6,7 @@ import { BaseTokenizer } from "./base";
 export class PatternTokenizer extends BaseTokenizer {
     private regex: RegExp
     private skip: boolean
-    constructor(tokenType: TokenType, name: string, regex: RegExp, skip: boolean = false) {
+    constructor(tokenType: TokenType, name: string, regex: RegExp, skip: boolean) {
         super(tokenType, name)
         this.tokenType = tokenType
         this.name = name

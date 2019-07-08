@@ -24,6 +24,7 @@ import { ForLoop } from "../ast/forloop";
 import { IndexAccess } from "../ast/indexaccess";
 import { ObjectNode } from "../ast/objectnode";
 import { ObjectProperty } from "../ast/objectproperty";
+import { ForLoopType } from "../ast/enums/forlooptype";
 
 export class Parser {
     constructor() {
@@ -458,17 +459,19 @@ export class Parser {
         switch(nextToken.type) {
             case TokenType.Each:
                 nextToken = stream.peek()
-                if(nextToken.type !== TokenType.SquareOpen) {
-                    throw new ParserError(`parser error, for loop invalid, [ expected after FOR EACH`, nextToken.position)
+                if(nextToken.type === TokenType.Identifier) {
+                    return new ForLoop(ForLoopType.Each, this.parseReference(stream), this.parseOperations(stream))
+                } else if (nextToken.type === TokenType.SquareOpen) {
+                    return new ForLoop(ForLoopType.Each, this.parseArray(stream), this.parseOperations(stream))
                 }
-                return new ForLoop(this.parseArray(stream), this.parseOperations(stream))
+                throw new ParserError(`parser error, for each loop invalid, array or identifier expected after FOR EACH`, nextToken.position)
             case TokenType.ParenOpen:
                 let count = this.parseExpression(stream)
                 nextToken = stream.consume()
                 if(nextToken.type !== TokenType.ParenClose) {
                     throw new ParserError(`parser error, for loop invalid, ) expected after itterations`, nextToken.position)
                 }
-                return new ForLoop(count, this.parseOperations(stream))
+                return new ForLoop(ForLoopType.For, count, this.parseOperations(stream))
             default:
                 throw new ParserError(`parser error, for loop invalid, array or itterations expected`, nextToken.position)
         }
@@ -537,8 +540,6 @@ export class Parser {
                     throw new ParserError(`parse error, string or number expected, found ${ref.value}`, ref.position)
             }
         }
-        if (toReturn.length === 0) throw new ParserError(`parse error, empty array found`, currentToken.position)
-
         return toReturn;
     }
 

@@ -19,6 +19,7 @@ import { MathematicalOperator } from "../ast/enums/mathematicaloperator";
 import { ForLoop } from "../ast/forloop";
 import { IndexAccess } from "../ast/indexaccess";
 import { ObjectNode } from "../ast/objectnode";
+import { ForLoopType } from "../ast/enums/forlooptype";
 
 declare var log : (s : string) => void
 
@@ -231,18 +232,20 @@ export class Engine {
     }
 
     private executeForLoop(loop : ForLoop, context: {[ key : string] : any}) {
-        if(Array.isArray(loop.parameter)) {
-            let vals = loop.parameter
-            for(let i = 0; i < vals.length; i++) {
-                context['$val'] = vals[i]
+        if(loop.type === ForLoopType.For) {
+            let val = this.evaluateExpression(loop.parameter as Node, context)
+            for(let i = 0; i < val; i++) {
+                context['$val'] = i
                 this.executeSequence(loop.operations, context)
             }
             delete context['$val']
-        }
-        else {
-            let val = this.evaluateExpression(loop.parameter, context)
-            for(let i = 0; i < val; i++) {
-                context['$val'] = i
+        } else {
+            let values = loop.parameter as any[]
+            if(!Array.isArray(loop.parameter)) {
+                values = this.evaluateExpression(values as unknown as Node, context)
+            }
+            for(let i = 0; i < values.length; i++) {
+                context['$val'] = values[i]
                 this.executeSequence(loop.operations, context)
             }
             delete context['$val']
