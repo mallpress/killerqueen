@@ -403,6 +403,12 @@ describe("Simple parser tests", () => {
         let text = "FOR EACH 'a' $i = $val"
         let tokens = tokenizer.tokenize(text);
         expect(() => parser.parse(tokens)).toThrowError()
+    })  
+
+    it("Test invalid property access", () => {
+        let text = "$return = $a.1"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError()
     })
     
     it("Test array access", () => {
@@ -413,6 +419,16 @@ describe("Simple parser tests", () => {
         var ctx = {'$temp' : null, 'a' : {'b' : [[55]]}}
         engine.execute(ctx)
         expect(ctx['$temp']).toBe(55)
+    })
+    
+    it("Test array setting", () => {
+        let text = '$temp[0][0] = 99'
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : [[]]}
+        engine.execute(ctx)
+        expect(ctx['$temp'][0]).toEqual([99])
     })
 
     it("Test object property set access", () => {
@@ -464,6 +480,17 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         ///@ts-ignore
         expect(ctx['$temp']['a']).toBe(1)
+    })
+    
+    it("Test evaluation of empty object", () => {
+        let text =  "$temp = {}"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$temp' : undefined }
+        engine.execute(ctx)
+        ///@ts-ignore
+        expect(ctx['$temp']).toEqual({})
     })
     
     it("Test evaluation of nested object", () => {
@@ -527,10 +554,22 @@ describe("Simple parser tests", () => {
         let tokens = tokenizer.tokenize(text);
         expect(() => parser.parse(tokens)).toThrowError('')
     })
+
+    it("Test for bad object parsing error with invalid property", () => {
+        let text =  "$a = {1}"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError()
+    })
     
     it("Test for unterminted string error", () => {
         let text =  "$a = 'sdfsf"
         expect(() => tokenizer.tokenize(text)).toThrowError('unterminated string')
+    })
+        
+    it("Test for invalid operation", () => {
+        let text =  "$a"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError('parser error, assignment expected, at position 1')
     })
 
     it("Test parsing decimal and evaluation", () => {
@@ -560,7 +599,13 @@ describe("Simple parser tests", () => {
     })
     
     it("Test parsing array failing for non string / number", () => {
-        let text =  "$a = ['a', temp]"
+        let text =  "FOR EACH ['a', temp] $a = 1"
+        let tokens = tokenizer.tokenize(text);
+        expect(() => parser.parse(tokens)).toThrowError()
+    })
+    
+    it("Test parsing array failing for multiple values without comma", () => {
+        let text =  "FOR EACH ['a' 1] $a = 1"
         let tokens = tokenizer.tokenize(text);
         expect(() => parser.parse(tokens)).toThrowError()
     })

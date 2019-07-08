@@ -273,7 +273,7 @@ export class Parser {
 
     private parseOperation(stream: TokenStream): Operation | FunctionCall {
         let nextToken = stream.peek(1)
-        if(nextToken.type === TokenType.ParenOpen) {
+        if(stream.hasNext(1) && nextToken.type === TokenType.ParenOpen) {
             return this.parseFunctionCall(stream)
         }
         let ref = this.parseReference(stream)
@@ -483,7 +483,10 @@ export class Parser {
         let finished = false;
         while(stream.hasNext() && !finished) {
             let nameToken = stream.peek()
-            if(nameToken.type === TokenType.BraceClose) break;
+            if(nameToken.type === TokenType.BraceClose) {
+                stream.consume()
+                break;
+            }
             if(nameToken.type !== TokenType.String) {
                 throw new ParserError(`parser error, expected string, found ${nameToken.value}`, nameToken.position)
             }
