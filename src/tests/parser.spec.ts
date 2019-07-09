@@ -543,6 +543,16 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$values']).toEqual([{'a': 'test1', 'b' : {'a' : 1}}, {'a': 'test2', 'b' : {'a' : 1}}])
     })
+    
+    it("Test string concat", () => {
+        let text =  "$a = 'a' + 'b' + 1"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$a' : null }
+        engine.execute(ctx)
+        expect(ctx['$a']).toBe('ab1')
+    })
 
     it("Test tokenisation failes", () => {
         let text =  "$a = %"

@@ -15,4 +15,5 @@ export enum NodeType {
     ForLoop = "ForLoop",
     Object = "Object",
     ObjectProperty = "ObjectProperty",
+    StringConcatenation = "StringConcatenation",
 }

@@ -25,6 +25,7 @@ import { IndexAccess } from "../ast/indexaccess";
 import { ObjectNode } from "../ast/objectnode";
 import { ObjectProperty } from "../ast/objectproperty";
 import { ForLoopType } from "../ast/enums/forlooptype";
+import { StringConcatenation } from "../ast/stringconcatenation";
 
 export class Parser {
     constructor() {
@@ -309,8 +310,7 @@ export class Parser {
             let startPosition = stream.getPosition()
             switch(currentToken.type) {
                 case TokenType.String:
-                    stream.consume()
-                    toReturn = new StringLiteral(currentToken.value)
+                    toReturn = this.parseString(stream)
                     break;
                 case TokenType.Number:
                     stream.consume()
@@ -397,6 +397,36 @@ export class Parser {
             return currentExpression
         }
         return toReturn
+    }
+
+    private parseString(stream : TokenStream) : StringConcatenation | StringLiteral {
+        let nextToken = stream.consume()
+        let stringLit = new StringLiteral(nextToken.value)
+        nextToken = stream.peek()
+        if(nextToken.type !== TokenType.Plus) return stringLit
+        let concat = new StringConcatenation()
+        concat.nodes.push(stringLit)
+        while(stream.hasNext(1)) {
+            if(nextToken.type !== TokenType.Plus) return concat
+            nextToken = stream.peek(1)
+            switch(nextToken.type) {
+                case TokenType.String:
+                case TokenType.Number:
+                case TokenType.True:
+                case TokenType.False:
+                    stream.consume(2)
+                    concat.nodes.push(new StringLiteral(nextToken.value))
+                    break;
+                case TokenType.Identifier:
+                    stream.consume(1)
+                    concat.nodes.push(this.parseReference(stream))
+                    break;
+                default:
+                    throw new ParserError(`parser error, string concatenation expected, found ${nextToken.value}`, nextToken.position)
+            }
+            nextToken = stream.peek()
+        }
+        return concat
     }
 
     private parseReference(stream : TokenStream) : Identifier | PropertyAccess {

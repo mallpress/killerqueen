@@ -20,8 +20,11 @@ import { ForLoop } from "../ast/forloop";
 import { IndexAccess } from "../ast/indexaccess";
 import { ObjectNode } from "../ast/objectnode";
 import { ForLoopType } from "../ast/enums/forlooptype";
+import { StringConcatenation } from "../ast/stringconcatenation";
 
 declare var log : (s : string) => void
+
+type ExecutionContext = {[ key : string] : any}
 
 export class Engine {
     private ast : Sequence
@@ -29,11 +32,11 @@ export class Engine {
         this.ast = ast
     }
 
-    public execute(context : {[ key : string] : any}) {
+    public execute(context : ExecutionContext) {
         this.executeSequence(this.ast, context)
     }
 
-    public executeSequence(sequence : Sequence, context : {[ key : string] : any}) {
+    public executeSequence(sequence : Sequence, context : ExecutionContext) {
         for(let i = 0; i < sequence.nodes.length; i++) {
             let node = sequence.nodes[i]
             switch(node.nodeType) {
@@ -53,7 +56,7 @@ export class Engine {
         }
     }
     
-    private executeOperation(operation: Operation, context: {[ key : string] : any}) {
+    private executeOperation(operation: Operation, context: ExecutionContext) {
         let rightValue = this.evaluateExpression(operation.expression, context)
         if(operation.reference.nodeType === NodeType.PropertyAccess) {
             let propAccess = operation.reference as PropertyAccess
@@ -89,7 +92,7 @@ export class Engine {
         context[ref.name] = leftValue
     }
 
-    private evaluateBranch(branch: Branch, context: {[ key : string] : any}) {
+    private evaluateBranch(branch: Branch, context: ExecutionContext) {
         if(this.evaluateConditions(branch.condition, context)) {
             this.executeSequence(branch.condTrueBody, context)
         }
@@ -150,12 +153,14 @@ export class Engine {
         return false
     }
     
-    private evaluateExpression(expression: Node, context: {[ key : string] : any}) : any {
+    private evaluateExpression(expression: Node, context: ExecutionContext) : any {
         switch(expression.nodeType) {
             case NodeType.NumericLiteral:
                 return (expression as NumericLiteral).value
             case NodeType.StringLiteral:
                 return (expression as StringLiteral).value
+            case NodeType.StringConcatenation:
+                return this.evaluateStringConcat(expression as StringConcatenation, context)
             case NodeType.BooleanLiteral:
                 return (expression as BooleanLiteral).value
             case NodeType.FunctionCall:
@@ -175,7 +180,20 @@ export class Engine {
         }
     }
 
-    private getPropertyAccessValue(reference: PropertyAccess, context : {[ key : string] : any}) : any {
+    private evaluateStringConcat(concat : StringConcatenation, context : ExecutionContext) : string {
+        let toReturn = "";
+        for(let i = 0; i < concat.nodes.length; i++) {
+            let n = concat.nodes[i]
+            if(n.nodeType === NodeType.StringLiteral) {
+                toReturn += (n as StringLiteral).value
+            } else {
+                toReturn += this.evaluateExpression(n, context);
+            }
+        }
+        return toReturn
+    }
+
+    private getPropertyAccessValue(reference: PropertyAccess, context : ExecutionContext) : any {
         let currentContext = context[reference.object.name]
         for(let i = 0; i < reference.references.length; i++) {
             let ref = reference.references[i]
@@ -188,7 +206,7 @@ export class Engine {
         return currentContext
     }
     
-    private setPropertyAccessValue(reference: PropertyAccess, value : any, context : {[ key : string] : any}) {
+    private setPropertyAccessValue(reference: PropertyAccess, value : any, context : ExecutionContext) {
         let currentContext = context[reference.object.name]
         for(let i = 0; i < reference.references.length - 1; i++) {
             let ref = reference.references[i]
@@ -207,7 +225,7 @@ export class Engine {
         }
     }
 
-    private computeAggregate(aggregate: Aggregate, context: {[ key : string] : any}) {
+    private computeAggregate(aggregate: Aggregate, context: ExecutionContext) {
         let left = this.evaluateExpression(aggregate.left, context)
         let right = this.evaluateExpression(aggregate.right!, context)
         switch(aggregate.operator) {
@@ -222,7 +240,7 @@ export class Engine {
         }
     }
 
-    private createObject(object : ObjectNode, context : {[ key : string] : any}) {
+    private createObject(object : ObjectNode, context : ExecutionContext) {
         let toReturn : {[ key : string] : any} = {}
         for(let i = 0; i < object.properties.length; i++) {
             let prop = object.properties[i]
@@ -231,7 +249,7 @@ export class Engine {
         return toReturn
     }
 
-    private executeForLoop(loop : ForLoop, context: {[ key : string] : any}) {
+    private executeForLoop(loop : ForLoop, context: ExecutionContext) {
         if(loop.type === ForLoopType.For) {
             let val = this.evaluateExpression(loop.parameter as Node, context)
             for(let i = 0; i < val; i++) {
@@ -252,7 +270,7 @@ export class Engine {
         }
     }
 
-    private executeFunction(call : FunctionCall, context: {[ key : string] : any}) : any {
+    private executeFunction(call : FunctionCall, context: ExecutionContext) : any {
         let fnName = call.name.toUpperCase()
         switch(fnName) {
             case 'MAX':
@@ -281,7 +299,7 @@ export class Engine {
         }
     }
 
-    private evaluateMax(args : Node [], context: {[ key : string] : any}) : number {
+    private evaluateMax(args : Node [], context: ExecutionContext) : number {
         let res = undefined
         for(let i = 0; i < args.length; i++) {
             let exp = args[i]
@@ -291,7 +309,7 @@ export class Engine {
         return res
     }
     
-    private evaluateMin(args : Node [], context: {[ key : string] : any}) : number {
+    private evaluateMin(args : Node [], context: ExecutionContext) : number {
         let res = undefined
         for(let i = 0; i < args.length; i++) {
             let exp = args[i]
