@@ -179,6 +179,16 @@ describe("Simple parser tests", () => {
         expect(ctx['$return']).toBe(true)
     })
     
+    it("Test logic grouping more complex", () => {
+        let text = "$return = true && true || false || true && ((true && false) || false)"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$return' : null}
+        engine.execute(ctx)
+        expect(ctx['$return']).toBe(true)
+    })
+    
     it("Test boolean assignment statment", () => {
         let text = '$value = true'
         let tokens = tokenizer.tokenize(text);
