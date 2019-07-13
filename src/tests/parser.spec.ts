@@ -179,14 +179,26 @@ describe("Simple parser tests", () => {
         expect(ctx['$return']).toBe(true)
     })
     
-    it("Test logic grouping more complex", () => {
-        let text = "$return = true && true || false || true && ((true && false) || false)"
+    it("Test logic grouping with mixed and and or basic", () => {
+        let text = "$toReturn = true && true || false || true && ((true && false) || false)"
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
         var engine = new Engine(ast)
-        var ctx = {'$return' : null}
+        var ctx = {'$toReturn' : null, a : true, b : true, c : false, d : true, e : true, f : false, g : false}
         engine.execute(ctx)
-        expect(ctx['$return']).toBe(true)
+        expect(ctx['$toReturn']).toBe(true)
+    })
+    
+    // should return true .... is not
+    // false || ((false || false) && (true && (false && true || true || true) || true) && true || true) && true
+    it("Test logic grouping with mixed and and or complex", () => {
+        let text = "$toReturn = a || ((b || c) && (d && (e && f || g || h) || i) && j || k) && l"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$toReturn' : null, a : false, b : false, c : false, d : true, e : false, f : true, g : true, h: true, i: true, j: true, k: true, l: true }
+        engine.execute(ctx)
+        expect(ctx['$toReturn']).toBe(true)
     })
     
     it("Test boolean assignment statment", () => {

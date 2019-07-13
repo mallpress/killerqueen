@@ -106,33 +106,36 @@ export class Parser {
                     let nextToken = stream.peek()
                     if (!nextToken) throw new ParserError(`${currentToken.value} found, with nothing after it`, currentToken.position)
 
+                    let newCond = null;
+
                     if (nextToken.type === TokenType.ParenOpen) {
-                        newGroup.right = this.parseBooleanExpressions(stream, parenOpen);
+                        newCond = this.parseBooleanExpressions(stream, parenOpen);
                     } else {
-                        let newCond = this.parseBooleanExpression(stream)
-                        // need to handle the case of A || B && C, so we steal B
-                        // from the previous group and create a new group with B as left and set
-                        // the previous group's right to the new group this gives up A || (B && C)
-                        // this should only be done if the previous expression was not
-                        // in brackets, as that should be treated as fixeds
-                        if (currentToken.type === TokenType.And && !prevInGroup) {
-                            if (prevNode.nodeType == NodeType.BooleanExpressionGroup) {
-                                let prevGroup = prevNode as BooleanExpressionGroup;
-                                let newLeft = prevGroup.right as Node;
-                                newGroup = new BooleanExpressionGroup(newLeft)
-                                newGroup.operator = operator
-                                newGroup.right = newCond
-                                prevGroup.right = newGroup
-                                newGroup = prevGroup
-                            } else {
-                                // if it was just a condition we can continue on as planned
-                                newGroup.right = newCond
-                            }
+                        newCond = this.parseBooleanExpression(stream)
+                    }
+                    // need to handle the case of A || B && C, so we steal B
+                    // from the previous group and create a new group with B as left and set
+                    // the previous group's right to the new group this gives up A || (B && C)
+                    // this should only be done if the previous expression was not
+                    // in brackets, as that should be treated as fixeds
+                    if (currentToken.type === TokenType.And && !prevInGroup) {
+                        if (prevNode.nodeType == NodeType.BooleanExpressionGroup) {
+                            let prevGroup = prevNode as BooleanExpressionGroup;
+                            let newLeft = prevGroup.right as Node;
+                            newGroup = new BooleanExpressionGroup(newLeft)
+                            newGroup.operator = operator
+                            newGroup.right = newCond
+                            prevGroup.right = newGroup
+                            newGroup = prevGroup
                         } else {
-                            // if it was an or, then we can continue on as planned
+                            // if it was just a condition we can continue on as planned
                             newGroup.right = newCond
                         }
+                    } else {
+                        // if it was an or, then we can continue on as planned
+                        newGroup.right = newCond
                     }
+
                     prevNode = newGroup as Node
                     break;
                 case TokenType.ParenOpen:
@@ -215,6 +218,7 @@ export class Parser {
             case TokenType.And:
             case TokenType.Or:
             case TokenType.Not:
+            case TokenType.ParenClose:
                 // we play it a bit fast or loose here as the user can
                 // have something like 1 || false .... which JS will handle 
                 // should we handle? TODO: Think about this
