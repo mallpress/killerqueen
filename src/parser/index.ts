@@ -109,6 +109,8 @@ export class Parser {
                     let newCond = null;
 
                     if (nextToken.type === TokenType.ParenOpen) {
+                        stream.consume()
+                        parenOpen++
                         newCond = this.parseBooleanExpressions(stream, parenOpen);
                     } else {
                         newCond = this.parseBooleanExpression(stream)
@@ -118,24 +120,18 @@ export class Parser {
                     // the previous group's right to the new group this gives up A || (B && C)
                     // this should only be done if the previous expression was not
                     // in brackets, as that should be treated as fixeds
-                    if (currentToken.type === TokenType.And && !prevInGroup) {
-                        if (prevNode.nodeType == NodeType.BooleanExpressionGroup) {
-                            let prevGroup = prevNode as BooleanExpressionGroup;
-                            let newLeft = prevGroup.right as Node;
-                            newGroup = new BooleanExpressionGroup(newLeft)
-                            newGroup.operator = operator
-                            newGroup.right = newCond
-                            prevGroup.right = newGroup
-                            newGroup = prevGroup
-                        } else {
-                            // if it was just a condition we can continue on as planned
-                            newGroup.right = newCond
-                        }
+                    if (currentToken.type === TokenType.And && prevNode.nodeType == NodeType.BooleanExpressionGroup) {
+                        let prevGroup = prevNode as BooleanExpressionGroup;
+                        let newLeft = prevGroup.right as Node;
+                        newGroup = new BooleanExpressionGroup(newLeft)
+                        newGroup.operator = operator
+                        newGroup.right = newCond
+                        prevGroup.right = newGroup
+                        newGroup = prevGroup
                     } else {
-                        // if it was an or, then we can continue on as planned
+                        // if it was just a condition we can continue on as planned
                         newGroup.right = newCond
                     }
-
                     prevNode = newGroup as Node
                     break;
                 case TokenType.ParenOpen:

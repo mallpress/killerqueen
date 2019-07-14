@@ -14,7 +14,7 @@ export class WordTokenizer extends BaseTokenizer {
 
     public nextToken(input: string, current: number): TokenResult | null {
         let value = ""
-        for(let i = 0; i < this.word.length; i++) {
+        for(let i = 0; i < this.word.length && (current + i) < input.length; i++) {
             let char = input[current + i].toLocaleLowerCase();
             if(char !== this.word[i]) {
                 return null;
