@@ -188,8 +188,8 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$toReturn']).toBe(true)
     })
-    
-    it("Test logic grouping with mixed and and or complex", () => {
+
+    it("Test grouping logic for regresion of sub groups", () => {
         let text = "$toReturn = false || ((false || false) && (true && (false && true || true || true) || true) && true || true) && true"
         let tokens = tokenizer.tokenize(text);
         let ast = parser.parse(tokens);
@@ -198,7 +198,47 @@ describe("Simple parser tests", () => {
         engine.execute(ctx)
         expect(ctx['$toReturn']).toBe(true)
     })
+
+    it("Test logic grouping was for regression 1", () => {
+        let text = "$toReturn = a && ((b || c) && d) || e && f"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$toReturn' : null, a : true, b : true, c : false, d : false, e : false, f : true}
+        engine.execute(ctx)
+        expect(ctx['$toReturn']).toBe(false)
+    })
+
+    it("Test logic grouping was for regression 2", () => {
+        let text = "$toReturn = a && ((b || c) && d)"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$toReturn' : null, a : true, b : true, c : false, d : false}
+        engine.execute(ctx)
+        expect(ctx['$toReturn']).toBe(false)
+    })
     
+    it("Test logic grouping was for regression 3", () => {
+        let text = "$toReturn = a || b && ((c) || d || e && (f))"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$toReturn' : null, a : false, b : true, c : false, d : true, e : true, f : false}
+        engine.execute(ctx)
+        expect(ctx['$toReturn']).toBe(true)
+    })
+    
+    it("Test logic grouping another broken set", () => {
+        let text = "$toReturn = true && true && (((false && (false) && (true || false || (true))) || true || false && false || false) && true && true || false)"
+        let tokens = tokenizer.tokenize(text);
+        let ast = parser.parse(tokens);
+        var engine = new Engine(ast)
+        var ctx = {'$toReturn' : null}
+        engine.execute(ctx)
+        expect(ctx['$toReturn']).toBe(true)
+    })
+
     it("Test boolean assignment statment", () => {
         let text = '$value = true'
         let tokens = tokenizer.tokenize(text);

@@ -111,6 +111,7 @@ export class Parser {
                     if (nextToken.type === TokenType.ParenOpen) {
                         stream.consume()
                         parenOpen++
+                        prevInGroup = false;
                         newCond = this.parseBooleanExpressions(stream, parenOpen);
                     } else {
                         newCond = this.parseBooleanExpression(stream)
@@ -120,7 +121,7 @@ export class Parser {
                     // the previous group's right to the new group this gives up A || (B && C)
                     // this should only be done if the previous expression was not
                     // in brackets, as that should be treated as fixeds
-                    if (currentToken.type === TokenType.And && prevNode.nodeType == NodeType.BooleanExpressionGroup) {
+                    if (!prevInGroup && currentToken.type === TokenType.And && prevNode.nodeType == NodeType.BooleanExpressionGroup) {
                         let prevGroup = prevNode as BooleanExpressionGroup;
                         let newLeft = prevGroup.right as Node;
                         newGroup = new BooleanExpressionGroup(newLeft)
