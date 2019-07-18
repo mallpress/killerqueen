@@ -111,7 +111,6 @@ export class Parser {
                     if (nextToken.type === TokenType.ParenOpen) {
                         stream.consume()
                         parenOpen++
-                        prevInGroup = false;
                         newCond = this.parseBooleanExpressions(stream, parenOpen);
                     } else {
                         newCond = this.parseBooleanExpression(stream)
@@ -122,6 +121,7 @@ export class Parser {
                     // this should only be done if the previous expression was not
                     // in brackets, as that should be treated as fixeds
                     if (!prevInGroup && currentToken.type === TokenType.And && prevNode.nodeType == NodeType.BooleanExpressionGroup) {
+
                         let prevGroup = prevNode as BooleanExpressionGroup;
                         let newLeft = prevGroup.right as Node;
                         newGroup = new BooleanExpressionGroup(newLeft)
@@ -134,12 +134,18 @@ export class Parser {
                         newGroup.right = newCond
                     }
                     prevNode = newGroup as Node
+                    prevInGroup = false
                     break;
                 case TokenType.ParenOpen:
                     parenOpen++;
                     stream.consume()
                     prevNode = this.parseBooleanExpressions(stream, parenOpen);
-                    prevInGroup = true;
+                    // somebody might have put brackets around an expression, not a group
+                    if(prevNode.nodeType == NodeType.BooleanExpressionGroup) {
+                        prevInGroup = true;
+                    } else {
+                        prevInGroup = false;
+                    }
                     break;
                 case TokenType.ParenClose:
                     parenOpen--;
