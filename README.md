@@ -20,6 +20,10 @@ The mathematical capabilities are rather limited at the moment, not taking into 
 Basic assignment:
 ```
 $cost = 1
+
+$cost+= 1
+
+$cost-= 1
 ```
 
 Using inbuilt functions:
@@ -35,6 +39,8 @@ $cost = MAX(1, ABS(MIN(1, -99)))
 Conditional:
 ```
 IF (true || false) THEN $cost = 99 ELSE $cost = 100
+
+IF ($a || ($b && $c)) THEN $cost = 99 ELSE $cost = 100
 ```
 
 For Loop: ($val being the current itteration value)
@@ -42,7 +48,14 @@ For Loop: ($val being the current itteration value)
 FOR ($count + 5) $cost = $val
 ```
 
-For Each Loop: (arrays supporting only string / numeric literals)
+For Each Loop: (literal arrays supporting only string / numeric literals or references)
 ```
 FOR EACH [0,1,2,3] $cost = $val
+
+FOR EACH $table.rows $cost = $val
+```
+
+Multiple operations can be performed under both conditionals and loops using a semicolon (;) character, in the form:
+```
+FOR EACH $table.rows $cost = $val.cost; $action = $val.action
 ```
